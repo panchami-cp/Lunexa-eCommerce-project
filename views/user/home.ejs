@@ -1,0 +1,287 @@
+
+ <%- include("../partials/user/header")%>
+
+ <head>
+  <style>
+  .wishlist-btn svg use {
+  transition: fill 0.3s;
+  fill: none;
+}
+
+.wishlist-btn.active svg use {
+  fill: red;
+}
+
+  </style>
+ </head>
+
+ <section class="video py-5 overflow-hidden">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="video-content open-up" data-aos="zoom-out">
+        <div class="video-bg">
+          <img src="images/video-image.jpg" alt="video" class="video-image img-fluid">
+        </div>
+        <!-- <div class="video-player">
+          <a class="youtube" href="https://www.youtube.com/embed/pjtsGzQjFM4">
+            <svg width="24" height="24" viewBox="0 0 24 24">
+              <use xlink:href="#play"></use>
+            </svg>
+            <img src="images/text-pattern.png" alt="pattern" class="text-rotate">
+          </a>
+        </div> -->
+      </div>
+    </div>
+  </div>
+</section>
+   <section id="billboard" class="bg-light py-5">
+     <div class="container">
+       <div class="row justify-content-center">
+         <h1 class="section-title text-center mt-4" data-aos="fade-up">New Collections</h1>
+         <div class="col-md-6 text-center" data-aos="fade-up" data-aos-delay="300">
+         </div>
+       </div>
+       <div class="row">
+         <div class="swiper main-swiper py-4" data-aos="fade-up" data-aos-delay="600">
+           <div class="swiper-wrapper d-flex border-animation-left">
+            <%for(let i=0; i<products.length; i++){%>
+             <div class="swiper-slide" >
+               <div class="banner-item image-zoom-effect">
+                 <div class="image-holder" style="position: relative;">
+                   <a href="/product_details?id=<%=products[i]._id%>">
+                     <img src="/uploads/re-product-image/<%=products[i].productImage[0]%>" alt="<%=products[i].productName%>" class="img-fluid">
+                   </a>
+                   <!-- wishlist icon -->
+                   <a href="javascript:void(0)" 
+                      class="btn-icon btn-wishlist wishlist-btn" 
+                      data-id="<%= products[i]._id %>" 
+                      style="position: absolute; top: 8px; right: 8px;">
+                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <use xlink:href="#heart"></use>
+                      </svg>
+                    </a>
+
+                 </div>
+                 <div class="banner-content py-4">
+                   <h5 class="element-title text-uppercase">
+                     <a href="index.html" class="item-anchor"><%=products[i].productName%></a>
+                   </h5>
+                   <p>Price: Rs.<%=products[i].salePrice%> 
+                    <%if(products[i].offer && products[i].offer > 0){ %>
+
+                    <strike>Rs. <%=products[i].regularPrice%></strike> 
+                    
+                  <%}%>
+                  </p>
+                   <!-- add to cart -->
+                   <div class="btn-left">
+                     <!-- <a href="#" class="btn-link fs-6 text-uppercase item-anchor text-decoration-none add-to-cart-link" data-product-id="<%= products[i]._id%>">ADD TO CART</a> -->
+                   </div>
+                 </div>
+               </div>
+             </div>
+             <%}%>
+       </div>
+     </div>
+     <div class="btn-left d-flex justify-content-center">
+        <a href="#" class="btn-link fs-6 text-uppercase item-anchor text-decoration-none">Discover Now</a>
+      </div>
+   </section>
+
+   <section class="features py-5">
+     <div class="container">
+       <div class="row d-flex justify-content-center">
+         <div class="col-md-3 text-center" data-aos="fade-in" data-aos-delay="300">
+           <div class="py-5">
+             <svg width="38" height="38" viewBox="0 0 24 24">
+               <use xlink:href="#shopping-bag"></use>
+             </svg>
+             <h4 class="element-title text-capitalize my-3">shop by categories</h4>
+           </div>
+         </div>
+       </div>
+     </div>
+   </section>
+ <%for(let i=0; i<categories.length; i++){%>
+   <section id="new-arrival" class="new-arrival product-carousel py-5 position-relative overflow-hidden">
+     <div class="container">
+       <div class="d-flex flex-wrap justify-content-between align-items-center mt-5 mb-3">
+         <h4 class="text-uppercase"><%=categories[i].categoryName%></h4>
+         <a href="index.html" class="btn-link">View All Products</a>
+       </div>
+       <div class="swiper product-swiper open-up" data-aos="zoom-out">
+         <div class="swiper-wrapper d-flex">
+          <%if(categories[i].productsByCategory && categories[i].productsByCategory.length > 0){%>
+          <%for(let j=0; j<categories[i].productsByCategory.length;j++){%>
+           <div class="swiper-slide">
+             <div class="product-item image-zoom-effect link-effect">
+               <div class="image-holder position-relative">
+                 <a href="/product_details?id=<%= categories[i].productsByCategory[j]._id %>">
+                   <img src="/uploads/re-product-image/<%=categories[i].productsByCategory[j].productImage[0]%>" alt="categories" class="product-image img-fluid">
+                 </a>
+                 <!-- wishlist icon -->
+                <a href="javascript:void(0);" 
+   class="btn-icon btn-wishlist wishlist-btn" 
+   data-id="<%= categories[i].productsByCategory[j]._id %>" 
+   style="position: absolute; top: 8px; right: 8px;">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <use xlink:href="#heart"></use>
+  </svg>
+</a>
+                 <div class="product-content">
+                   <h5 class="element-title text-uppercase fs-5 mt-3">
+                     <a href="index.html"><%=categories[i].productsByCategory[j].productName%></a>
+                   </h5>
+
+                   <!-- add to cart -->
+                   <!-- <a href="#" class="text-decoration-none add-to-cart-link" data-after="Add to cart" data-product-id="<%= categories[i].productsByCategory[j]._id %>"></a> -->
+                    <span>Price: Rs.<%=categories[i].productsByCategory[j].salePrice%> 
+                      <%if(categories[i].productsByCategory[j].offer && categories[i].productsByCategory[j].offer > 0){%>
+                      <strike>Rs. <%=categories[i].productsByCategory[j].regularPrice%></strike> 
+                    <%}%>
+                    </span>
+                  
+                 </div>
+               </div>
+             </div>
+           </div>
+           <%}%>
+           <%}else{%>
+
+            <p>No products available in this category</p>
+
+            <%}%>
+         </div>
+         <div class="swiper-pagination"></div>
+       </div>
+     </div>
+   </section>
+   <%}%>
+ 
+   
+
+   <section class="newsletter bg-light" style="background: url(images/pattern-bg.png) no-repeat;">
+     <div class="container">
+       <div class="row justify-content-center">
+         <div class="col-md-8 py-5 my-5">
+           <div class="subscribe-header text-center pb-3">
+             <h3 class="section-title text-uppercase">Sign Up for our newsletter</h3>
+           </div>
+           <form id="form" class="d-flex flex-wrap gap-2">
+             <input type="text" name="email" placeholder="Your Email Addresss" class="form-control form-control-lg">
+             <button class="btn btn-dark btn-lg text-uppercase w-100">Sign Up</button>
+           </form>
+         </div>
+       </div>
+     </div>
+   </section> 
+
+
+   <!-- add to wishlist -->
+  <script>
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const wishlistButtons = document.querySelectorAll(".wishlist-btn");
+
+    wishlistButtons.forEach(button => {
+      button.addEventListener("click", async function () {
+        const productId = this.getAttribute("data-id");
+
+        try {
+          const response = await fetch(`/addtoWishlist?id=${productId}`, {
+            method: 'GET'
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            this.classList.add("active");
+            const svg = this.querySelector('svg');
+            svg.setAttribute("fill", "red");
+            showPopup(data.message || "Added to wishlist", "success")
+          } else {
+            showPopup(data.message || "Something went wrong", "error");
+          }
+        } catch (err) {
+          console.error("Wishlist error:", err);
+          window.location.href = "/pageNotFound"
+        }
+      });
+    });
+  });
+
+</script>
+
+<!-- add to cart -->
+<script>
+  // document.addEventListener('DOMContentLoaded', () => {
+  //   const cartLinks = document.querySelectorAll('.add-to-cart-link')
+
+  //   cartLinks.forEach(link => {
+  //     link.addEventListener('click', async (e) => {
+  //       e.preventDefault()
+  //       const productId = link.getAttribute('data-product-id')
+
+  //       try {
+  //         const res = await fetch(`/addToCart?productId=${productId}`)
+  //         const data = await res.json()
+
+  //         if (data.success === false && data.redirect) {
+  //           showPopup("This product is not available.", "error")
+  //           setTimeout(() => {
+  //             window.location.href = data.redirect
+  //           }, 2000)
+  //         } else {
+  //           showPopup(data.message || "Added to cart", "success")
+  //         }
+
+  //       } catch (error) {
+  //         console.error('Error:', error)
+  //         showPopup("Failed to add to cart.", "error")
+  //       }
+  //     })
+  //   })
+  // })
+
+
+// popup
+  function showPopup(message, type) {
+    const popup = document.createElement('div')
+    popup.textContent = message
+    popup.style.position = 'fixed'
+    popup.style.top = '20px'
+    popup.style.left = '20px'
+    popup.style.padding = '12px 20px'
+    popup.style.borderRadius = '5px'
+    popup.style.color = '#fff'
+    popup.style.zIndex = '9999'
+    popup.style.backgroundColor = '#000'
+    popup.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)'
+    document.body.appendChild(popup)
+
+    setTimeout(() => {
+      popup.remove()
+    }, 2000)
+  }
+</script> 
+
+
+ 
+   <!-- footer -->
+ 
+   <%- include("../partials/user/footer")%>
+   <script src="js/jquery.min.js"></script>
+   <script src="js/plugins.js"></script>
+   <script src="js/SmoothScroll.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"
+     integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe"
+     crossorigin="anonymous"></script>
+   <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+   <script src="js/script.min.js"></script>
+ </body>
+ 
+ </html>
+
+  
+
+ 

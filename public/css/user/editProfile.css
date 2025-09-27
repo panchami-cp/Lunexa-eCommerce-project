@@ -1,0 +1,21 @@
+ .profile-card {
+      
+      margin: 5rem auto;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      background-color: #fff;
+    }
+    .profile-photo {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 2px solid #ccc;
+    }
+    .bottom-buttons {
+      text-align: center;
+      margin-top: 2rem;
+    }
+    
+   

@@ -1,0 +1,187 @@
+<%- include("../partials/user/header")%>
+
+
+   <div class="profile-card mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4 class="mb-0">Edit Profile</h4>
+    </div>
+
+    <form id="editProfileForm" action="/edit_profile" method="POST" enctype="multipart/form-data">
+
+       <div class="mb-3">
+    <label for="profileImage" class="form-label">Profile Image</label>
+    <input 
+    type="file" 
+    class="form-control" 
+    id="profileImage" 
+    name="profileImage" 
+    accept="image/*" 
+    onchange="previewImage(event)"
+  >
+
+    <% if (user.profileImage) { %>
+  <img 
+    id="preview" 
+    src="<%= user.profileImage %>" 
+    alt="Image Preview" 
+    style="max-width:7rem; margin-top:10px;"
+  >
+<% } else { %>
+  <img 
+    id="preview" 
+    src="" 
+    alt="Image Preview" 
+    style="max-width:7rem; margin-top:10px; display:none;"
+  >
+<% } %>
+
+  </div>
+
+      <div class="mb-3">
+        <label for="fullname" class="form-label">Full Name</label>
+        <input type="text" class="form-control" id="name" name="name" value="<%=user.fullname%>">
+        <div class="invalid-feedback">Invalid/Empty input</div>
+      </div>
+
+     <div class="mb-3">
+        <label for="phone" class="form-label">Phone</label>
+        <input type="tel" class="form-control" id="phone" name="phone" value="<%=user.phone?user.phone: '' %>">
+        <div class="invalid-feedback">Invalid/Empty input</div>
+      </div>
+
+      <div class="mb-3">
+        <label for="alternatePhone" class="form-label">Alternate Phone</label>
+        <input type="tel" class="form-control" id="alternatePhone" name="alternatePhone" value="<%=user.alternatePhone?user.alternatePhone:'' %>">
+        <div class="invalid-feedback">Invalid/Empty input</div>
+      </div>
+
+      <div class="mb-3">
+  <label class="form-label">Gender</label><br>
+
+  <div style="display: inline-flex; align-items: center; margin-right: 1rem;">
+    <input type="radio" name="gender" id="male" value="male" 
+      <%= user.gender === 'male' ? 'checked' : '' %> 
+      style="margin: 0 4px 0 0;">
+    <label for="male" style="margin: 0;">Male</label>
+  </div>
+
+  <div style="display: inline-flex; align-items: center; margin-right: 1rem;">
+    <input type="radio" name="gender" id="female" value="female" 
+      <%= user.gender === 'female' ? 'checked' : '' %> 
+      style="margin: 0 4px 0 0;">
+    <label for="female" style="margin: 0;">Female</label>
+  </div>
+
+  <div style="display: inline-flex; align-items: center; margin-right: 1rem;">
+    <input type="radio" name="gender" id="other" value="other" 
+      <%= user.gender === 'other' ? 'checked' : '' %> 
+      style="margin: 0 4px 0 0;">
+    <label for="other" style="margin: 0;">Other</label>
+  </div>
+</div>
+
+
+      <div>
+        <button type="submit" class="btn btn-dark">Save Changes</button>
+      </div>
+    </form>
+
+    <div class="bottom-buttons">
+      <a href="/change_email" class="btn btn-outline-secondary me-2 mt-3">Change Email</a>
+      <a href="/change_password" class="btn btn-outline-secondary mt-3">Change Password</a>
+    </div>
+  </div>
+
+
+  <!-- validation -->
+   
+  <script>
+
+    document.getElementById('editProfileForm').addEventListener('submit', function(event){
+        
+        event.preventDefault()
+
+        const form = event.target
+
+        let isValid = true
+
+        const fieldsToValidate = ['name', 'phone','alternatePhone']
+
+        const namePattern = /^[A-Za-z\s]+$/
+        const phonePattern = /^\d{10}$/
+
+        fieldsToValidate.forEach((field)=>{
+
+            if(!document.getElementById(field).value.trim()){
+                document.getElementById(field).classList.add('is-invalid')
+                isValid = false
+            }else{
+                document.getElementById(field).classList.remove('is-invalid')
+            }
+        })
+
+        const inputName = document.getElementById('name').value
+
+        if(!namePattern.test(inputName.trim())){
+            document.getElementById('name').classList.add('is-invalid')
+            isValid = false
+        }
+
+        const phonePatternField = ['phone', 'alternatePhone']
+
+        phonePatternField.forEach((field)=>{
+            let value = document.getElementById(field).value
+            if(!phonePattern.test(value.trim())){
+
+                document.getElementById(field).classList.add('is-invalid')
+                isValid = false
+            }
+        })
+
+        const phoneValue = document.getElementById('phone').value
+        const altPhoneValue = document.getElementById('alternatePhone').value
+
+        if(phoneValue && altPhoneValue && phoneValue === altPhoneValue){
+
+            document.getElementById('alternatePhone').classList.add('is-invalid');
+            isValid = false;
+
+    }
+
+        if(isValid){
+            form.submit()
+        }
+
+
+
+    })
+
+    //image preview
+
+    function previewImage(event) {
+    const preview = document.getElementById("preview");
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        preview.src = e.target.result;
+        preview.style.display = "block";
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  </script>
+
+ <%- include("../partials/user/footer")%>
+   <script src="js/jquery.min.js"></script>
+   <script src="js/plugins.js"></script>
+   <script src="js/SmoothScroll.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"
+     integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe"
+     crossorigin="anonymous"></script>
+   <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+   <script src="js/script.min.js"></script>
+ </body>
+ 
+ </html>

@@ -1,0 +1,54 @@
+/* Center the success container */
+.success-container {
+  max-width: 600px;
+  margin: 80px auto;
+  padding: 40px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+/* Heading style */
+.success-container h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #28a745; /* success green */
+  margin-bottom: 20px;
+}
+
+/* Paragraph style */
+.success-container p {
+  font-size: 1.1rem;
+  color: #555;
+  margin-bottom: 30px;
+}
+
+/* Buttons */
+.success-container .btn {
+  display: inline-block;
+  padding: 10px 20px;
+  font-size: 1rem;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  margin: 0 10px;
+}
+
+.success-container .btn-details {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.success-container .btn-details:hover {
+  background-color: #0056b3;
+}
+
+.success-container .btn-continue {
+  background-color: #28a745;
+  color: #fff;
+}
+
+.success-container .btn-continue:hover {
+  background-color: #1e7e34;
+}

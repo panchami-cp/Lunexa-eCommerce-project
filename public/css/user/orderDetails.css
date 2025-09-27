@@ -1,0 +1,169 @@
+.order-details-box {
+  max-width: 900px;
+  margin: 20px auto;
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.top-row {
+  display: flex;
+  justify-content: flex-start;
+  gap: 20px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.product-image {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.order-info {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+/* .order-id {
+  font-weight: bold;
+  font-size: 16px;
+  color: #333;
+} */
+
+.delivery-date {
+  text-align: right;
+  /* font-size: 14px; */
+}
+
+.delivery-date .btn {
+  margin-top: 8px;
+}
+
+.status-tracking {
+  display: flex;
+  justify-content: space-between;
+  margin: 20px 0;
+  padding: 10px 0;
+  border-top: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+}
+
+.status-step {
+  flex: 1;
+  text-align: center;
+  /* font-size: 14px; */
+  color: #aaa;
+  position: relative;
+}
+
+.status-step.active {
+  color: #007bff;
+  font-weight: bold;
+}
+
+.status-step::after {
+  content: '';
+  position: absolute;
+  height: 3px;
+  width: 100%;
+  background: #ddd;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: -1;
+}
+
+.status-step.active::after {
+  background: #007bff;
+}
+
+.order-actions {
+  text-align: center;
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.order-actions .btn {
+  min-width: 150px;
+}
+
+.order-progress {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 30px auto;
+    max-width: 700px;
+    position: relative;
+}
+
+.progress-step-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.progress-step {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background-color: #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    z-index: 2; /* keep circle above line */
+    font-weight: bold;
+}
+
+.progress-step.completed {
+    background-color: #28a745; /* green */
+}
+
+.checkmark {
+    font-size: 16px;
+    line-height: 1;
+}
+.progress-line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background-color: #ccc;
+    z-index: 1;
+    transform: translateY(-50%);
+}
+
+.progress-line.completed {
+    background-color: #28a745;
+}
+.progress-step-container:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    width: 100%;
+    height: 4px;
+    background-color: #ccc;
+    z-index: 0;
+}
+
+.progress-step-container.completed:not(:last-child)::after {
+    background-color: #28a745;
+}
+
+.step-label {
+    margin-top: 8px;
+    font-size: 13px;
+    text-align: center;
+}
+

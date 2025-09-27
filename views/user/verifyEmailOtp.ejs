@@ -1,0 +1,248 @@
+<%- include("../partials/user/header")%>
+
+<head>
+    <style>
+        body, html {
+            margin: 0;
+            min-height: 100%;
+            background-color: white;
+        }
+        .container {
+            min-height: 100vh;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color:white;
+            gap: 20px;
+            padding: 20px;
+            overflow-y: auto; 
+        }
+        .login_wrap {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            border-radius: 5px;
+            background: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        .auth-header{
+            font-size: 26px;
+            font-weight: 600;
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .otp-timer {
+            display: inline-block;
+            margin-left: 10px;
+            font-size: 14px;
+            position: relative;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            line-height: 60px;
+            text-align: center;
+            background: #f2f2f2;
+            border: 2px solid #ddd;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        #timerValue {
+            display: block;
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            line-height: 60px;
+        }
+        #timerValue.expired {
+            font-size: 14px;
+            color: red;
+        }
+        .btn-primary {
+            background-color: black;
+            border: none;
+            width: 100%;
+            margin-top: 10px;
+            display: block;
+        }
+        .btn-secondary {
+            width: 100%;
+            background-color: #6c757d;
+            border: none;
+            margin-top: 10px;
+            display: block;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        .alert-danger {
+            margin-top: 15px;
+            text-align: center;
+        }
+        .text-center {
+            text-align: center;
+            margin-top: 15px;
+        }
+        .text-muted {
+            color: #6c757d;
+            text-align: center;
+        }
+        .pt-25 {
+            padding-top: 25px;
+        }
+    </style>
+</head>
+
+<div class="container">
+    <div class="login_wrap">
+        <div class="padding_eight_all bg-white">
+            <div class="heading_s1 auth-header text-uppercase">
+                otp verification
+            </div>
+            <form id="otpForm" action="/new_email_otp" method="post" onsubmit="return otpVerification()">
+                <div class="form-group">
+                    <p>We have send an OTP to your new E-mail</p>
+                    <label for="otp">Enter OTP:</label>
+                    <input type="text" id="otp" name="otp" class="form-control" required maxlength="6" pattern="\d*" />
+                </div>
+                <button type="submit" class="btn btn-primary">Verify Email</button>
+                <div class="form-group text-center">
+                    <div id="otpTimer" class="otp-timer">
+                        <span id="timerValue">60</span>
+                    </div>
+                    <button type="button" class="btn btn-secondary" onclick="resendOtp()" id="resentOtp">Resend OTP</button>
+                </div>
+                <% if (locals.message && message.length > 0) { %>
+                <div class="alert alert-danger"><%= message %></div>
+                <% } %>
+            </form>
+           
+        </div>
+    </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>  
+<script>
+    document.getElementById("otp").focus();
+
+    let timer = 60;
+    let timerInterval;
+
+    function startTimer() {
+        document.getElementById('resentOtp').disabled = true
+        timerInterval = setInterval(() => {
+            
+            timer--;
+            document.getElementById("timerValue").textContent = timer;     
+            if (timer <= 0) {
+                clearInterval(timerInterval);
+                document.getElementById("timerValue").classList.add("expired");
+                document.getElementById("timerValue").textContent = "Expired";
+                document.getElementById("otp").disabled = true;
+                document.getElementById('resentOtp').disabled = false
+            }
+        }, 1000);
+    }
+    startTimer();
+    
+
+    function otpVerification(){
+
+        const inputOtp = document.getElementById('otp').value
+
+        $.ajax({
+            type:"POST",
+            url:"/new_email_otp",
+            data:{otp:inputOtp},
+            success: function (response){
+                if(response.success){
+        
+                   showPopup("New Email verified successfully", "success")
+
+                   .then(()=>{
+                        window.location.href = response.redirectUrl
+                   })
+                }
+                else{
+                
+                    showPopup(response.message, "error")
+                }
+            },
+            error: function (){
+
+                showPopup("Please try again", "error")
+            }
+        })
+        return false
+    }
+
+    function resendOtp(){
+
+        clearInterval(timerInterval)
+        timer = 60
+        document.getElementById('otp').disabled = false
+        document.getElementById('timerValue').classList.remove("Expired")
+        startTimer()
+
+        $.ajax({
+
+            type: "post",
+            url: "/change_email/resend_otp",
+            success: function(response){
+                if(response.success){
+                   
+                    showPopup("OTP resend successfully", "success")
+
+                }else{
+                   
+                    showPopup("An error occured while resending OTP", "error")
+                }
+            }
+        })
+        return false
+    }
+
+    function showPopup(message, type) {
+    return new Promise((resolve) => {
+        const popup = document.createElement('div');
+        popup.textContent = message;
+        popup.style.position = 'fixed';
+        popup.style.top = '20px';
+        popup.style.left = '20px';
+        popup.style.padding = '12px 20px';
+        popup.style.borderRadius = '5px';
+        popup.style.color = '#fff';
+        popup.style.zIndex = '9999';
+        popup.style.backgroundColor = type === "success" ? "green" : "red";
+        popup.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)';
+        document.body.appendChild(popup);
+
+        setTimeout(() => {
+            popup.remove();
+            resolve(); 
+        }, 2000);
+    });
+}
+
+</script>
+
+<!-- footer -->
+<%- include("../partials/user/footer")%>
+   <script src="js/jquery.min.js"></script>
+   <script src="js/plugins.js"></script>
+   <script src="js/SmoothScroll.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"
+     integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe"
+     crossorigin="anonymous"></script>
+   <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+   <script src="js/script.min.js"></script>
+ </body>
+ 
+ </html>
+

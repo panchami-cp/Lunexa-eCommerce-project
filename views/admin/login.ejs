@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUNEXA ADMIN</title>
+</head>
+<body>
+    <html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href='https://unpkg.com/boxicons@2.1.2/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/css/user/signup.css">
+    <title>Admin Login</title>
+
+</head>
+<body>
+
+    <section class="auth-wrapper" >
+        <div class="auth-card login-card">
+            <div class="auth-header">ADMIN LOGIN</div>
+            
+            <!-- form -->
+            <form action="/admin/login" method="POST" class="auth-form" id="login_form">
+                
+                <div id="email_error" class="error_message"></div> <!--email error div-->
+                <div class="auth-field">
+                    <input type="email" placeholder="Email" class="auth-input" id="email" name="email"> <!--email field-->
+                </div>
+                <div id="password_error" class="error_message"></div> <!--password error div-->
+                <div class="auth-field">
+                    <input type="password" placeholder="Password" class="auth-password" id="password" name="password"> <!--password field-->
+                    <i class='bx bx-hide toggle-visibility'></i>
+                </div>
+                
+                
+                <!-- <div class="auth-actions">
+                    <a href="#" class="reset-password">Forgot password?</a>
+                </div> -->
+
+                <%if(locals.message && message.length>0){%>
+                    <div style="color: rgb(203, 6, 6);"> <%=message%></div>
+                    <%}%>
+
+                <div class="auth-button-group">
+                    <button type="submit" class="auth-submit" style="background-color: black;" >LOGIN</button>
+                </div>
+                
+            </form>
+            <!-- <div class="auth-footer center-align">
+                <span>Don't have an account? <a href="/signup" class="switch-auth switch-to-signup">Signup</a></span>
+            </div> -->
+            <!-- <div class="separator"></div> -->
+            <!-- <div class="social-login"> -->
+                
+                <!-- <a href="/auth/google" class="social-button google-button">
+                    <img src="https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png" alt="Google Logo" class="google-icon">
+                    <span>Signup with Google</span>
+                </a> -->
+            </div>
+        </div>
+
+       
+    </section>
+
+
+    <script>
+
+    
+
+       
+        const email = document.getElementById('email')
+        const password = document.getElementById('password')
+        const emailError = document.getElementById('email_error')
+        const passwordError = document.getElementById('password_error')
+       
+
+       
+
+        function emailValidation(event){
+
+            const emailValue = email.value
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+            if(emailValue === ""){
+                emailError.style.display ='block'
+                emailError.innerHTML = "This field is required"
+            }
+            else if(!emailPattern.test(emailValue)){
+                emailError.style.display = "block"
+                emailError.innerHTML = "Enter a valid email ID"
+            }
+            else{
+                emailError.style.display = "none"
+                emailError.innerHTML = ""
+            }
+
+        }
+
+        function passwordValidation(event){
+            
+            const passwordValue = password.value
+            
+
+            if(passwordValue === ""){
+                passwordError.style.display ='block'
+                passwordError.innerHTML = "This field is required"
+            }
+           
+            else{
+                passwordError.style.display = "none"
+                passwordError.innerHTML = ""
+            }
+        }
+
+        
+        
+
+        document.addEventListener("DOMContentLoaded", function(){
+            document.getElementById("login_form").addEventListener("submit", function(event){
+
+
+                emailValidation()
+                passwordValidation()
+
+                if(emailError.innerHTML ||
+                    passwordError.innerHTML
+                ){
+                    event.preventDefault()
+                }
+              
+            })
+        })
+
+    </script>
+
+</body>
+</html>
+</body>
+</html>

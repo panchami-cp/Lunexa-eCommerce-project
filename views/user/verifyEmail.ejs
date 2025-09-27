@@ -1,0 +1,80 @@
+<%- include("../partials/user/header")%>
+
+<head>
+    <link rel="stylesheet" href="/css/user/signup.css">
+</head>
+
+<section class="auth-wrapper">
+    <div class="auth-card login-card">
+        <div class="auth-header">EMAIL</div>
+
+        <!-- form -->
+        <form action="/verify_email" method="POST" class="auth-form" id="login_form">
+            <div class="auth-field">
+                <input type="email" placeholder="Email" class="auth-input form-control" id="email" name="email">
+                <div class="invalid-feedback" id="email_error"> <!-- bootstrap error message container -->
+                    <!-- error message will be injected via JS -->
+                </div>
+            </div>
+
+            <% if (locals.message && message.length > 0) { %>
+                <div style="color: rgb(206, 5, 5);"><%= message %></div>
+            <% } %>
+
+            <div class="auth-button-group">
+                <button type="submit" class="auth-submit" style="background-color: black;">SEND OTP</button>
+            </div>
+        </form>
+
+        <div class="auth-footer center-align">
+            <span>Don't have an account? <a href="/signup" class="switch-auth switch-to-signup">Signup</a></span>
+        </div>
+    </div>
+</section>
+
+<script>
+    const email = document.getElementById('email');
+    const emailError = document.getElementById('email_error');
+
+    function emailValidation() {
+        const emailValue = email.value;
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (emailValue === "") {
+            email.classList.add("is-invalid");
+            emailError.textContent = "This field is required";
+        } else if (!emailPattern.test(emailValue)) {
+            email.classList.add("is-invalid");
+            emailError.textContent = "Enter a valid email ID";
+        } else {
+            email.classList.remove("is-invalid");
+            emailError.textContent = "";
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("login_form").addEventListener("submit", function (event) {
+            emailValidation();
+
+            // Prevent submission if there is an error message
+            if (email.classList.contains("is-invalid")) {
+                event.preventDefault();
+            }
+        });
+    });
+</script>
+
+<!-- footer -->
+<%- include("../partials/user/footer")%>
+<script src="js/jquery.min.js"></script>
+<script src="js/plugins.js"></script>
+<script src="js/SmoothScroll.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe"
+    crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+<script src="js/script.min.js"></script>
+</body>
+
+</html>

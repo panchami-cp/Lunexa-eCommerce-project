@@ -1,0 +1,178 @@
+<%- include("../../views/partials/admin/header") %>
+
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <style>
+    .form-label {
+      font-weight: 500;
+    }
+
+    .table td,
+    .table th {
+      vertical-align: middle;
+    } 
+
+    a {
+      text-decoration: none;
+    }
+
+    .btn-sm-custom {
+      width: 100px;
+      padding: 6px 12px;
+      font-size: 0.875rem;
+    }
+
+    .btn-action {
+      width: 80px;
+    }
+  </style>
+</head>
+<div class="container-fluid px-4">
+<!-- Page Header -->
+<div class="content-header mb-4 mt-4">
+  <h2 class="content-title card-title">Orders</h2>
+</div>
+
+<!-- Search Form-->
+<div class="row mb-4 justify-content-center">
+  <div class="col-md-10">
+    <div class="d-flex justify-content-between align-items-center">
+      <!-- Search Form -->
+      <form action="/admin/orders" method="get" id="searchForm" class="d-flex gap-2">
+    <!-- Search -->
+    <div class="position-relative flex-grow-1">
+        <input 
+            type="text" 
+            name="search" 
+            class="form-control rounded-pill pe-5"
+            placeholder="Search orders" 
+            value="<%= search || '' %>"
+            style="min-width: 300px;">
+       
+    </div>
+
+    <!-- Sort -->
+    <select name="sort" class="form-select rounded-pill">
+        <option value="newest" <%= sort === "newest" ? "selected" : "" %>>Newest First</option>
+        <option value="oldest" <%= sort === "oldest" ? "selected" : "" %>>Oldest First</option>
+        <option value="amountHigh" <%= sort === "amountHigh" ? "selected" : "" %>>Amount High → Low</option>
+        <option value="amountLow" <%= sort === "amountLow" ? "selected" : "" %>>Amount Low → High</option>
+    </select>
+
+    <!-- Status Filter -->
+    <select name="status" class="form-select rounded-pill">
+        <option value="">All Status</option>
+        <option value="Pending" <%= statusFilter === "Pending" ? "selected" : "" %>>Pending</option>
+        <option value="Shipped" <%= statusFilter === "Shipped" ? "selected" : "" %>>Shipped</option>
+        <option value="Delivered" <%= statusFilter === "Delivered" ? "selected" : "" %>>Delivered</option>
+        <option value="Canceled" <%= statusFilter === "Canceled" ? "selected" : "" %>>Canceled</option>
+    </select>
+
+    <!-- Submit -->
+    <button class="btn btn-dark rounded-pill px-4" type="submit">Apply</button>
+
+    <!-- Reset -->
+    <a href="/admin/orders" class="btn btn-outline-secondary rounded-pill px-4">Clear</a>
+</form>
+
+    </div>
+  </div>
+</div>
+
+<!-- orders Table -->
+<div class="right mt-4">
+  <table class="table table-hover shadow-sm">
+    <thead class="table-light">
+      <tr>
+        <th>ID</th>
+        <th>User</th>
+        <th>Order Date</th>
+        <th>Total Amount</th>
+        <th>Products</th>
+        <th>Total Amount/Product</th>
+        <th>Status</th>
+        <th>Return Request</th>
+        <th>Delivery Date</th>
+        <th>View Orders</th>
+      </tr>
+    </thead>
+   <tbody>
+  <% for (let i = 0; i < orderData.length; i++) { %>
+    <% const order = orderData[i]; %>
+    
+    <!-- Loop through each product in this order -->
+    <% for (let j = 0; j < order.items.length; j++) { %>
+      <% const item = order.items[j]; %>
+      <tr>
+        <% if (j === 0) { %>
+          <!-- Show orderId only once per order (rowspan for multiple products) -->
+          <td rowspan="<%= order.items.length %>"><%= order.orderId %></td>
+          <td rowspan="<%= order.items.length %>"><%= order.userId.fullname %></td>
+          <td rowspan="<%= order.items.length %>"><%= new Date(order.createdOn).toLocaleDateString("en-GB") %></td>
+          <td rowspan="<%= order.items.length %>"><%= order.finalAmount %></td>
+        <% } %>
+
+        <!-- Product details -->
+        <td>
+          <div style="width: 4rem;">
+            <img src="/uploads/re-product-image/<%=item.productId.productImage[0]%>" alt="<%= item.productId.productName %>">
+          </div>
+        </td>
+        <td><%=item.totalPrice%></td>
+
+        <!-- Product status -->
+        <td class="text-capitalize"><%= item.orderStatus %></td>
+
+        <!-- Return request (if per-product returnRequest) -->
+        <td class="text-capitalize">
+          <%if(item.returnRequest && item.returnRequest.status){%>
+          <%= item.returnRequest.status %>
+          <%}else{%>
+            N/A 
+            <%}%>
+        </td>
+        <td>-</td>
+        <td>
+           <a href="/admin/orders/view_order?id=<%= item._id %>" 
+               class="btn btn-info text-white btn-action">View</a>
+        </td>
+      </tr>
+    <% } %>
+  <% } %>
+</tbody>
+
+  </table>
+</div>
+
+<!-- Pagination -->
+<div class="pagination d-flex justify-content-center mt-4">
+  <% if (currentPage > 1) { %>
+    <a href="/admin/orders?page=<%= currentPage - 1 %>" class="btn btn-outline-secondary mx-1">&laquo; Previous</a>
+  <% } %>
+
+  <% for (let i = 1; i <= totalPages; i++) { %>
+    <% if (i === currentPage) { %>
+      <span class="btn  mx-1"><%= i %></span>
+    <% } else { %>
+      <a href="/admin/orders?page=<%= i %>" class="btn btn-outline-secondary mx-1"><%= i %></a>
+    <% } %>
+  <% } %>
+
+  <% if (currentPage < totalPages) { %>
+    <a href="/admin/orders?page=<%= currentPage + 1 %>" class="btn btn-outline-secondary mx-1">Next &raquo;</a>
+  <% } %>
+</div>
+</div>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<%- include("../../views/partials/admin/footer") %>
+<script>
+    function resetPage(){
+        document.getElementById("searchInput").value = ""
+        document.getElementById('searchForm').submit()
+    }
+</script>

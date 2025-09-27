@@ -1,0 +1,222 @@
+<%- include("../partials/user/header")%>
+
+  <div class="container-fluid" style="margin-bottom: 10px;">
+    <main class="container mt-4">
+      <div class="row">
+        <h5 class="fw-bold mb-3">Selected Products</h5>
+
+        <!-- Left: Cart Products -->
+        <div class="col-md-8">
+          <% if (cartItems.length===0) { %>
+            <p>Your cart is empty.</p>
+            <% } else { %>
+              <% cartItems.forEach((item, index)=> { %>
+                <div class="card mb-3 p-2 cart-item position-relative" data-index="<%= index %>" style="height: auto;">
+                  <div class="d-flex align-items-center">
+
+
+                    <!--  Checkbox -->
+                    <input type="checkbox" class="form-check-input me-2 cart-select" checked
+                      data-price="<%= item.totalPrice %>">
+
+                    <!-- Left: Product Image -->
+                    <div class="product-img me-3" style="width: 150px; height: 150px; overflow: hidden;">
+                      <a href="/product_details?id=<%= item.productId%>">
+                      <img src="/uploads/re-product-image/<%= item.productImage %>" alt="<%= item.productName %>"
+                        style="width: 100%; height: 100%; object-fit: cover;">
+                        </a>
+                    </div>
+
+
+
+
+                    <div class="right-details ">
+
+                      <!-- Right: Product Details -->
+                      <div>
+                        <h6 class="fw-bold mb-1">
+                          <%= item.productName %>
+                        </h6>
+
+                        <!-- Size Selection -->
+                        <div class="mb-2">
+                          <p for="size-<%= item._id %>">Size: <span class="text-dark"><%=item.selectedSize%></span></p>
+                          <!-- <select class="form-select form-select-sm size-select" data-cart-id="<%= item.cartItemId %>" name="selectedSize">
+                            <% item.size.forEach(function(s) {
+                                const isSelected = item.selectedSize === s.size
+                              %>
+                              <option value="<%= s.size %>" <%= isSelected ? 'selected' : '' %>><%= s.size%></option>
+                              <% }) %>
+                          </select> -->
+                        </div>
+
+                        <!-- Quantity Buttons -->
+
+                        <div class="mb-2 d-flex align-items-center gap-2">
+                          <button class="btn btn-sm btn-outline-secondary qty-btn" data-type="decrease"
+                            data-cart-id="<%= item.cartItemId %>">-</button>
+                          <span class="px-2" id="qty-<%= item.cartItemId %>">
+                            <%= item.quantity %>
+                          </span>
+                          <button class="btn btn-sm btn-outline-secondary qty-btn" data-type="increase"
+                            data-cart-id="<%= item.cartItemId %>">+</button>
+                        </div>
+
+                        <!-- Price -->
+                        <p class="text-danger fw-bold mb-0">₹ <%= item.price%>
+                        </p>
+                      </div>
+
+                      <!-- remove button -->
+                      <button type="button" class="btn btn-sm btn-close position-absolute top-0 end-0 m-2 remove-item"
+                        data-bs-toggle="modal" data-bs-target="#confirmRemoveModal"
+                        data-remove-url="/remove_product?id=<%= item.cartItemId %>">
+                      </button>
+
+                    </div>
+                  </div>
+                </div>
+                <% }) %>
+        </div>
+
+        <!-- Right: Price Summary -->
+        <div class="col-md-4">
+          <div class="card p-3">
+            <h6 class="fw-bold">PRICE DETAILS (<span id="item-count">
+                <%= totalItems %>
+              </span> Items)</h6>
+            <hr>
+            <div class="d-flex justify-content-between">
+              <span>Total MRP</span>
+              <span>₹ <span id="total-mrp">
+                  <%= totalMRP %>
+                </span></span>
+            </div>
+             <div class="d-flex justify-content-between">
+              <span>Delivery</span>
+              <span>₹ <span id="delivery">
+                  Free
+                </span></span>
+            </div>
+            <div class="d-flex justify-content-between">
+              <span>Discount</span>
+              <span class="text-success">-₹ <span id="total-discount">
+                  <%= totalDiscount %>
+                </span></span>
+            </div>
+            <hr>
+            <div class="d-flex justify-content-between fw-bold">
+              <span>Total Amount</span>
+              <span>₹ <span id="final-amount">
+                  <%= finalAmount %>
+                </span></span>
+            </div>
+            <a href="/checkout">
+              <button class="btn btn-danger w-100 mt-3">CONTINUE</button>
+            </a>
+          </div>
+        </div>
+        <% } %>
+      </div>
+    </main>
+  </div>
+
+  <!-- Confirm Remove Modal -->
+  <div class="modal fade" id="confirmRemoveModal" tabindex="-1" aria-labelledby="confirmRemoveModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="confirmRemoveModalLabel">Remove Product</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to remove this product from your cart?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <a id="confirmRemoveBtn" class="btn btn-danger" href="#">Remove</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+    const confirmModal = document.getElementById('confirmRemoveModal');
+    const confirmRemoveBtn = document.getElementById('confirmRemoveBtn');
+
+    confirmModal.addEventListener('show.bs.modal', function (event) {
+      const button = event.relatedTarget;
+      const removeUrl = button.getAttribute('data-remove-url');
+
+      confirmRemoveBtn.setAttribute('href', removeUrl);
+    });
+  </script>
+
+
+  <!-- quantity button -->
+
+  <script>
+  document.querySelectorAll('.qty-btn').forEach(button => {
+    button.addEventListener('click', async () => {
+      
+      const type = button.dataset.type;
+      const cartId = button.dataset.cartId;
+
+      const res = await fetch('/cart/update_quantity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cartId, type })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        
+        document.getElementById(`qty-${cartId}`).textContent = data.newQty
+
+        location.reload(); 
+      }else{
+        showPopup(data.message, 'error')
+      }
+    });
+  });
+
+
+  // popup
+  function showPopup(message, type) {
+    const popup = document.createElement('div')
+    popup.textContent = message
+    popup.style.position = 'fixed'
+    popup.style.top = '20px'
+    popup.style.left = '20px'
+    popup.style.padding = '12px 20px'
+    popup.style.borderRadius = '5px'
+    popup.style.color = '#fff'
+    popup.style.zIndex = '9999'
+    popup.style.backgroundColor = type === 'error'? '#ff4d4d': '#000'
+    popup.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)'
+    document.body.appendChild(popup)
+
+    setTimeout(() => {
+      popup.remove()
+    }, 2000)
+  }
+ 
+</script>
+
+
+  <!-- footer -->
+  <%- include("../partials/user/footer")%>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/plugins.js"></script>
+    <script src="js/SmoothScroll.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe"
+      crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+    <script src="js/script.min.js"></script>
+    </body>
+
+    </html>

@@ -1,0 +1,79 @@
+<%- include("../partials/user/header")%>
+
+
+<section class="auth-wrapper">
+  <div class="auth-card login-card">
+    <div class="auth-header text-uppercase">enter new email</div>
+
+    <form action="/change_email" method="POST" class="auth-form" id="login_form">
+
+      <div class="auth-field">
+        <input type="email" placeholder="New Email" class="auth-input" id="email" name="email">
+        <div class="invalid-feedback" id="email_error"></div>
+      </div>
+
+      <% if (locals.message && message.length > 0) { %>
+        <div style="color: rgb(206, 5, 5)"><%= message %></div>
+      <% } %>
+
+      <div class="auth-button-group">
+        <button type="submit" class="auth-submit text-uppercase" style="background-color: black;">Send OTP</button>
+      </div>
+
+    </form>
+  </div>
+</section>
+
+<script>
+  const email = document.getElementById('email');
+  const emailError = document.getElementById('email_error');
+
+  function setInvalid(field, errorDiv, message) {
+    field.classList.add('is-invalid');
+    errorDiv.style.display = 'block';
+    errorDiv.innerText = message;
+  }
+
+  function clearInvalid(field, errorDiv) {
+    field.classList.remove('is-invalid');
+    errorDiv.style.display = 'none';
+    errorDiv.innerText = '';
+  }
+
+  function emailValidation() {
+    const emailValue = email.value.trim();
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailValue) {
+      setInvalid(email, emailError, 'This field is required');
+    } else if (!emailPattern.test(emailValue)) {
+      setInvalid(email, emailError, 'Enter a valid email ID');
+    } else {
+      clearInvalid(email, emailError);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("login_form").addEventListener("submit", function (event) {
+      emailValidation();
+
+      if (emailError.innerText) {
+        event.preventDefault();
+      }
+    });
+  });
+</script>
+
+<!-- footer -->
+<%- include("../partials/user/footer")%>
+<script src="js/jquery.min.js"></script>
+<script src="js/plugins.js"></script>
+<script src="js/SmoothScroll.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"
+  integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe"
+  crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+<script src="js/script.min.js"></script>
+</body>
+</html>

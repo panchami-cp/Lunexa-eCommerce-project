@@ -1,0 +1,115 @@
+<%- include("../../views/partials/admin/header") %>
+
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+  <div class="col-md-6">
+    <form method="POST" data-id="<%= category._id %>" 
+      class="p-4 border rounded shadow" style="background-color: #fff;" id="editCategoryForm">
+
+  <h4 class="text-center mb-4">Edit Category</h4>
+
+  <!-- Category Name -->
+  <div class="mb-4">
+    <label for="categoryName" class="form-label">Name</label>
+    <input type="text" name="categoryName" id="categoryName" 
+           value="<%= category.categoryName %>" class="form-control border" />
+    <div class="invalid-feedback" id="nameError"></div>
+  </div>
+
+  <!-- Description -->
+  <div class="mb-4">
+    <label class="form-label">Description</label>
+    <textarea name="description" id="description" class="form-control border" rows="4"><%= category.description %></textarea>
+    <div class="invalid-feedback" id="descError"></div>
+  </div>
+
+  <div class="text-center">
+    <button class="btn btn-dark px-4" type="submit">Update Category</button>
+  </div>
+</form>
+
+  </div>
+</div>
+
+
+<!-- validation -->
+
+<script>
+  document.getElementById('editCategoryForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const form = e.target;
+    const categoryId = form.dataset.id;
+    const nameInput = document.getElementById('categoryName');
+    const descInput = document.getElementById('description');
+    const nameError = document.getElementById('nameError');
+    const descError = document.getElementById('descError');
+
+    // Reset states
+    nameInput.classList.remove('is-invalid');
+    descInput.classList.remove('is-invalid');
+    nameError.textContent = '';
+    descError.textContent = '';
+
+    // Trim values
+    const name = nameInput.value.trim();
+    const description = descInput.value.trim();
+    const nameRegex = /^[A-Za-z\s]+$/;
+
+    let valid = true;
+
+    if (!name) {
+      nameInput.classList.add('is-invalid');
+      nameError.textContent = "Category name is required.";
+      valid = false;
+    } else if (!nameRegex.test(name)) {
+      nameInput.classList.add('is-invalid');
+      nameError.textContent = "Only letters and spaces are allowed.";
+      valid = false;
+    }
+
+    if (!description) {
+      descInput.classList.add('is-invalid');
+      descError.textContent = "Description cannot be empty.";
+      valid = false;
+    }
+
+    if (!valid) return;
+
+    try {
+      const res = await fetch(`/admin/edit_category/${categoryId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ categoryName: name, description })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        
+        window.location.href = '/admin/category'
+
+
+      } else {
+
+        if (data.error) {
+          Swal.fire({
+             icon: 'error',
+            title: 'Error',
+            text: data.error
+           })
+
+        } else {
+          alert(data.error || 'Something went wrong');
+        }
+      }
+    } catch (err) {
+      console.error()
+    }
+  });
+</script>
+
+
+
+
+
+<%- include("../../views/partials/admin/footer") %>

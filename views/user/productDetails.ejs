@@ -1,0 +1,272 @@
+<%- include("../partials/user/header")%>
+
+<head>
+<link rel="stylesheet" href="/css/user/productDetails.css">
+</head>
+
+
+
+  <div class="breadcrumb">
+    <a href="/">Home</a> >
+    <a href="/shop_all">Shop All</a> >
+    <!-- <a href="/shop_all/indian-fusion"></a> > -->
+    <span>
+      <%=product.productName%>
+    </span>
+  </div>
+  <main class="card-wrapper shadow-sm">
+    <div class="card">
+      <!-- card left -->
+      <div class="product-imgs">
+        <div class="img-display">
+          <div class="img-showcase">
+            <img src="/uploads/re-product-image/<%=product.productImage[0]%>" alt="<%=product.productName%>"
+              class="zoomable">
+            <img src="/uploads/re-product-image/<%=product.productImage[1]%>" alt="<%=product.productName%>"
+              class="zoomable">
+            <img src="/uploads/re-product-image/<%=product.productImage[2]%>" alt="<%=product.productName%>"
+              class="zoomable">
+            <img src="/uploads/re-product-image/<%=product.productImage[3]%>" alt="<%=product.productName%>"
+              class="zoomable">
+          </div>
+          <script>
+            document.querySelectorAll('.zoomable').forEach(image => {
+              image.addEventListener('mousemove', (e) => {
+                const { left, top, width, height } = e.target.getBoundingClientRect();
+                const x = (e.clientX - left) / width * 100;
+                const y = (e.clientY - top) / height * 100;
+                e.target.style.transformOrigin = `${x}% ${y}%`;
+                e.target.style.transform = 'scale(2)';
+              });
+
+              image.addEventListener('mouseleave', () => {
+                image.style.transform = 'scale(1)';
+              });
+            });
+          </script>
+        </div>
+        <div class="img-select">
+          <div class="img-item">
+            <a href="#" data-id="1">
+              <img src="/uploads/re-product-image/<%=product.productImage[0]%>" alt="<%=product.productName%>">
+            </a>
+          </div>
+          <div class="img-item">
+            <a href="#" data-id="2">
+              <img src="/uploads/re-product-image/<%=product.productImage[1]%>" alt="<%=product.productName%>">
+            </a>
+          </div>
+          <div class="img-item">
+            <a href="#" data-id="3">
+              <img src="/uploads/re-product-image/<%=product.productImage[2]%>" alt="<%=product.productName%>">
+            </a>
+          </div>
+          <div class="img-item">
+            <a href="#" data-id="4">
+              <img src="/uploads/re-product-image/<%=product.productImage[3]%>" alt="<%=product.productName%>">
+            </a>
+          </div>
+        </div>
+      </div>
+      <!-- right side -->
+      <div class="right d-flex flex-column">
+        <div class="details">
+          <h2 class="text-capitalize mb-1">
+            <%=product.productName%>
+            </h2>
+            <h5 class="category text-capitalize"><%=category.categoryName%> wear</h5>
+          
+          <div class="rating">★★★★☆ (124 reviews)</div>
+          
+          <p class="price text-dark">Rs.<%=product.salePrice%>
+            <%if(product.offer && product.offer > 0){%>
+            <strike class="text-secondary">Rs<%=product.regularPrice%></strike>
+            <span class="offer"><%=product.offer%>% off</span>
+              <%}%>
+              </p>
+
+          <div>
+            <label for="size-select">Select Size: </label>
+            <select name="selectedSize" id="size-select" class="form-select">
+              <% if (size && size.length> 0) { %>
+                <% size.forEach(s=> { %>
+                  <% if (s.quantity> 0) { %>
+                    <option value="<%= s.size %>">
+                      <%= s.size %> (<%= s.quantity %>)
+                    </option>
+                    <% } %>
+                      <% }) %>
+                        <% } else { %>
+                          <option disabled>No size data available</option>
+                          <% } %>
+            </select>
+          </div>
+
+          <%if(product.status === 'In Stock'){%>
+          <p class="stock text-success text-capitalize">in stock</p>
+          <%}else if(product.status === 'Out of stock'){%>
+            <p class="stock text-warning text-capitalize">Out of stock</p>
+            <%}else if(product.status === 'Discountinued'){%>
+              <p class="stock text-danger text-capitalize">Discountinued</p>
+              <%}%>
+
+          <p class="stock">Stock: <span class="text-dark"><%=product.totalQuantity%></span></p>
+          <h4>Highlights</h4>
+          <ul>
+            <li>Soft breathable cotton</li>
+            <li>Indian fusion design</li>
+            <li>Perfect for summer</li>
+          </ul>
+          <!-- add to cart -->
+          <button class="btn addToCart-btn" data-id="<%= product._id %>">Add to Cart</button>
+
+          <!-- add to wishlist -->
+          <button class="btn wishlist-btn" data-id="<%= product._id %>">Wishlist</button>
+          
+        </div>
+       
+      </div>
+       <section class="recommendations">
+          <h3>Recommended for You</h3>
+          <div class="rec-products">
+            <%for(let i=0; i<recoment.length; i++){%>
+              <div class="rec-item">
+                <a href="/product_details?id=<%= recoment[i]._id %>">
+                  <img src="/uploads/re-product-image/<%=recoment[i].productImage[0]%>" alt="recoment[i].productName" />
+                </a>
+                <p>
+                  <%=recoment[i].productName%>
+                </p>
+                <span>Rs.<%=recoment[i].salePrice%></span>
+
+              </div>
+              <%}%>
+
+          </div>
+        </section>
+
+    </div>
+  </main>
+
+
+<!-- wishlist -->
+  <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const wishlistButton = document.querySelector(".wishlist-btn");
+
+    if (wishlistButton) {
+      wishlistButton.addEventListener("click", async function (e) {
+        e.preventDefault(); 
+
+        const productId = this.getAttribute("data-id");
+
+        try {
+          const response = await fetch(`/addtoWishlist?id=${productId}`, {
+            method: 'GET'
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            this.textContent = "Added to Wishlist ❤️";
+            this.disabled = true;
+          } else {
+            alert(data.message || "Already in wishlist.");
+          }
+        } catch (err) {
+          console.error("Wishlist error:", err);
+          window.location.href = "/pageNotFound"; 
+        }
+      });
+    }
+  });
+</script>
+
+<!-- add to cart -->
+
+ <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const addToCartButton = document.querySelector(".addToCart-btn");
+
+    if (addToCartButton) {
+      addToCartButton.addEventListener("click", async function (e) {
+        e.preventDefault(); 
+
+        const productId = this.getAttribute("data-id");
+        const selectedSize = document.getElementById('size-select').value
+
+        try {
+          const response = await fetch(`/addToCart`, {
+            method: 'POST',
+             headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+
+          selectedSize: selectedSize,
+          productId: productId
+
+        })
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+
+            showPopup(data.message || "Added to cart", "success")
+            
+          } else {
+            showPopup(data.message || "Something went wrong", "error")
+          }
+        } catch (err) {
+          console.error("Add to cart error:", err);
+          window.location.href = "/pageNotFound"; 
+        }
+      });
+    }
+  });
+
+
+// popup
+
+   function showPopup(message, type) {
+    const popup = document.createElement('div')
+    popup.textContent = message
+    popup.style.position = 'fixed'
+    popup.style.top = '20px'
+    popup.style.left = '20px'
+    popup.style.padding = '12px 20px'
+    popup.style.borderRadius = '5px'
+    popup.style.color = '#fff'
+    popup.style.zIndex = '9999'
+    popup.style.backgroundColor = '#000'
+    popup.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)'
+    document.body.appendChild(popup)
+
+    setTimeout(() => {
+      popup.remove()
+    }, 2000)
+  }
+</script>
+
+
+  
+
+  
+
+
+
+ <!-- footer -->
+  <%- include("../partials/user/footer")%>
+    <script src="/js/user/productDetails.js"></script>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/plugins.js"></script>
+    <script src="js/SmoothScroll.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe"
+      crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+    <script src="js/script.min.js"></script>
+    </body>
+
+    </html>

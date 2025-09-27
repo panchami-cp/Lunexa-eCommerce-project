@@ -1,0 +1,155 @@
+<%- include("../../views/partials/admin/header") %>
+
+
+<div class="container-fluid px-4">
+  <!-- Page Heading -->
+  <div class="row mb-4 mt-4 align-items-center">
+    <div class="col">
+      <h2 class="content-title fw-semibold mb-0">Customers</h2>
+    </div>
+  </div>
+
+ <!-- Search Form -->
+<div class="row mb-4 justify-content-center">
+  <div class="col-md-8">
+    <form action="/admin/users" method="get" id="searchForm">
+      <div class="d-flex align-items-center gap-2">
+
+        <!-- Wrapper for input and clear button -->
+        <div class="position-relative flex-grow-1">
+          <input 
+            type="text" 
+            class="form-control rounded-pill pe-5" 
+            placeholder="Search customers..." 
+            name="search" 
+            id="searchInput" 
+            value="<%= search %>"
+          >
+          <button 
+            type="button" 
+            class="btn position-absolute top-50 end-0 translate-middle-y me-3 p-0 border-0 bg-transparent" 
+            onclick="resetPage()" 
+            title="Clear"
+          >
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+
+        <!-- Search button next to input -->
+        <button class="btn btn-dark px-4 rounded-pill" type="submit">Search</button>
+
+      </div>
+    </form>
+  </div>
+</div>
+
+
+  <!-- Customer Table -->
+  <div class="table-responsive">
+    <table class="table table-hover shadow-sm">
+      <thead class="table-light">
+        <tr>
+          <th><b>Name</b></th>
+          <th><b>Email</b></th>
+          <th><b>Phone No</b></th>
+          <th><b>Action</b></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% for (let i = 0; i < data.length; i++) { %>
+          <tr>
+            <td class="text-capitalize"><%= data[i].fullname %></td>
+            <td><%= data[i].email %></td>
+
+            <td>
+              <% if(data[i].phone) { %>
+              <%= data[i].phone%>
+              <%} else{%>
+                 <span class="text-muted">Not available</span>
+                 <%}%>
+            </td>
+            <td>
+              <% if (!data[i].isBlocked) { %>
+                <button class="btn btn-sm btn-danger" onclick="confirmBlock('<%= data[i]._id %>')">Block</button>
+              <% } else { %>
+                <button class="btn btn-sm btn-success" onclick="confirmUnblock('<%= data[i]._id %>')">Unblock</button>
+              <% } %>
+            </td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination d-flex justify-content-center mt-4">
+    <% if (currentPage > 1) { %>
+      <a href="/admin/users?page=<%= currentPage - 1 %>" class="btn btn-outline-secondary mx-1">&laquo; Previous</a>
+    <% } %>
+
+    <% for (let i = 1; i <= totalPages; i++) { %>
+      <% if (i === currentPage) { %>
+        <span class="btn btn-outline-secondary mx-1"><%= i %></span>
+      <% } else { %>
+        <a href="/admin/users?page=<%= i %>" class="btn btn-outline-secondary mx-1"><%= i %></a>
+      <% } %>
+    <% } %>
+
+    <% if (currentPage < totalPages) { %>
+      <a href="/admin/users?page=<%= currentPage + 1 %>" class="btn btn-outline-secondary mx-1">Next &raquo;</a>
+    <% } %>
+  </div>
+</div>
+
+
+
+
+        <%- include("../../views/partials/admin/footer") %>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+        <script>
+            function resetPage(){
+                document.getElementById("searchInput").value = ""
+                document.getElementById('searchForm').submit()
+            }
+
+
+            function confirmBlock(userId){
+                Swal.fire({
+                    title: 'Block user?',
+                    icon: 'warning',
+                    text: 'Are you sure you want to block the user?',
+                    showCancelButton: true,
+                    cancelButtonText: 'Cancel',
+                    confirmButtonText: 'Block'
+                }).then((result)=>{
+                    if(result.isConfirmed){
+                        fetch(`/admin/block_user?id=${userId}`,{
+                            method:'get'
+                        })
+                        .then(()=>location.reload())
+                        
+                    }
+                    
+                })
+            }
+
+            function confirmUnblock(userId){
+                Swal.fire({
+                    title: 'Unblock user?',
+                    icon: 'warning',
+                    text: 'Are you sure you want to unblock the user?',
+                    showCancelButton: true,
+                    cancelButtonText: 'Cancel',
+                    confirmButtonText: 'Unblock'
+                }).then((result)=>{
+                    if(result.isConfirmed){
+                        fetch(`/admin/unblock_user?id=${userId}`,{
+                            method:'get'
+                        })
+                        .then(()=>location.reload())
+                    }
+                    
+                })
+            }
+        </script>

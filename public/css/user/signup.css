@@ -1,0 +1,264 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
+
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    
+}
+
+
+.auth-wrapper {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color:white;
+  gap: 20px;
+  padding: 20px;
+  overflow-y: auto; 
+}
+
+.auth-card {
+  max-width: 400px;
+  width: 100%;
+  padding: 30px;
+  border-radius: 12px;
+  background-color: #ffffff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.5s ease, opacity 0.5s ease;
+  transform: none;
+  opacity: 1;
+}
+
+.signup-card{
+    transform: translate(100%, -50%);
+    opacity: 0;
+}
+.auth-wrapper.show-signup .signup-card{
+    transform: translate(-50%, -50%);
+    opacity: 1;
+}
+.auth-wrapper.show-signup .login-card{
+    transform: translate(-100%, -50%);
+    opacity: 0;
+}
+.auth-header{
+    font-size: 26px;
+    font-weight: 600;
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+}
+.auth-form{
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.auth-field{
+    position: relative;
+}
+.auth-input,
+.auth-password,
+.auth-submit{
+    width: 100%;
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+}
+.auth-input:focus,
+.auth-password:focus{
+    border-color: #4070f4;
+    outline: none;
+}
+.toggle-visibility{
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #888;
+    font-size: 18px;
+}
+.auth-actions{
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+.reset-password{
+    color: #4070f4;
+    text-decoration: none;
+}
+.reset-password:hover{
+    text-decoration: underline;
+}
+.auth-button-group{
+    display: flex;
+    justify-content: center;
+}
+.auth-submit{
+    background-color: #4070f4;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+.auth-submit:hover{
+    background-color: #305db0;
+}
+.auth-footer{
+    text-align: center;
+    margin-top: 20px;
+}
+.auth-footer span,
+.auth-footer a{
+    font-size: 14px;
+    color: #333;
+}
+.auth-footer a{
+    color: #4070f4;
+    text-decoration: none;
+}
+.auth-footer a:hover{
+    text-decoration: underline;
+}
+.separator{
+    height: 1px;
+    background-color: #ddd;
+    margin: 20px 0;
+    position: relative;
+}
+.separator::before{
+    content: 'Or';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #ffffff;
+    padding: 0 10px;
+    color: #888;
+}
+.social-login{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.social-button{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+.facebook-button{
+    background-color: #4267b2;
+    color: #fff;
+}
+.google-button{
+    border-color: #ddd;
+    background-color: #ffffff;
+    color: #333;
+}
+.google-button:focus,
+.google-button:active{
+    background-color: #ffffff;
+    color: #333;
+    border-color: #ddd;
+    outline: none;
+}
+.facebook-icon,
+.google-icon{
+    margin-right: 10px;
+}
+.google-icon{
+    width: 20px;
+    height: 20px;
+}
+
+@media screen and (max-width: 400px){
+    .auth-card {
+        padding: 20px 10px;
+    }
+}
+
+@media screen and (max-width: 768px){
+    .auth-wrapper{
+        flex-direction: column;
+        padding: 10px;
+    }
+    .auth-card{
+        max-width: 90%;
+        padding: 20px;
+    }
+    .social-login{
+        flex-direction: column;
+        gap: 5px;
+    }
+    .social-button{
+        font-size: 12px;
+        padding: 8px;
+    }
+}
+
+@media screen and (max-width: 480px){
+    .auth-header{
+        font-size: 22px;
+    }
+    .auth-input,
+    .auth-password,
+    .auth-submit{
+        font-size: 12px;
+        padding: 10px;
+    }
+    .toggle-visibility{
+        font-size: 16px;
+    }
+    .auth-footer span,
+    .auth-footer a{
+        font-size: 12px;
+    }
+    .separator::before{
+        font-size: 12px;
+    }
+    .facebook-icon,
+    .google-icon{
+        margin-right: 5px;
+    }
+}
+
+@media screen and (max-width: 320px){
+    .auth-card{
+        padding: 15px;
+    }
+    .auth-header{
+        font-size: 18px;
+    }
+    .auth-footer{
+        margin-top: 10px;
+    }
+}
+/* Red border for invalid inputs */
+.is-invalid {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 0.15rem rgba(220, 53, 69, 0.25);
+}
+
+/* Error message below input */
+.invalid-feedback {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: none; /* Shown via JS */
+}
+
+/* Optional: For better spacing inside form fields */
+.auth-field {
+  margin-bottom: 1.5rem;
+}

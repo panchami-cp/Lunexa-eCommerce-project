@@ -1,0 +1,158 @@
+<%- include("../../views/partials/admin/header") %>
+
+<head>
+    <link rel="stylesheet" href="/css/admin/orderDetails.css">
+</head>
+
+<div class="order-details-container">
+
+    <!-- Return request (only for this single item) -->
+    <% if (item.returnRequest && item.returnRequest.status) { %>
+    <div class="box shadow-sm p-3 mb-5 bg-body rounded">
+        <h3>Return Request</h3>
+
+        <div class="detail-row">
+            <span class="label">Status:</span>
+            <span class="value <%= item.returnRequest.status %>">
+                <%= item.returnRequest.status %>
+            </span>
+        </div>
+
+        <% if (item.returnRequest.reason) { %>
+        <div class="detail-row">
+            <span class="label">Reason:</span>
+            <span class="value"><%= item.returnRequest.reason %></span>
+        </div>
+        <% } %>
+
+        <% if (item.returnRequest.status === 'Pending') { %>
+            <form action="/admin/return/approve?id=<%=orderData._id%>&itemId=<%= item._id %>" method="post" style="display:inline;">
+                <button class="btn btn-success">Approve</button>
+            </form>
+            <form action="/admin/return/reject?id=<%=orderData._id%>&itemId=<%= item._id %>" method="post" style="display:inline;">
+                <button class="btn btn-danger">Reject</button>
+            </form>
+        <% } %>
+    </div>
+    <% } %>
+
+
+    <!-- Order Summary -->
+    <div class="box shadow-sm p-3 mb-5 bg-body rounded">
+        <h3>Order Summary</h3>
+        <div class="detail-row">
+            <span class="label">Order ID:</span>
+            <span class="value"><%= orderData.orderId %></span>
+        </div>
+        <div class="detail-row">
+            <span class="label">Total Amount:</span>
+            <span class="value">₹<%=orderData.finalAmount%></span>
+        </div>
+        <div class="detail-row">
+            <span class="label">Payment Method:</span>
+            <span class="value"><%=orderData.paymentMethod%></span>
+        </div>
+        
+        <form id="statusForm">
+            <input type="hidden" name="id" id="orderId" value="<%=orderData._id%>">
+            <input type="hidden" name="itemId" id="itemId" value="<%=item._id%>">
+
+            <label for="deliveryDate"><strong>Delivery Date: </strong></label>
+            <input type="date" id="deliveryDate" class="shadow-sm bg-body rounded">
+            
+            <label for="orderStatus"><strong>Status: </strong></label>
+            <select name="orderStatus" id="orderStatus" class="shadow-sm bg-body rounded">
+                <% for (let i = 0; i < orderStatus.length; i++) { %>
+                    <option 
+                        value="<%= orderStatus[i] %>" 
+                        <%= orderStatus[i] === item.orderStatus ? 'selected' : '' %>>
+                        <%= orderStatus[i] %>
+                    </option>
+                <% } %>
+            </select>
+            <button type="submit" class="btn btn-secondary p-1">Update</button>
+        </form>
+        <div id="errorMessage" class="fw-light text-danger"></div>
+    </div>
+
+    <!-- Single Product Details -->
+    <div class="box shadow-sm p-3 mb-5 bg-body rounded">
+        <h3>Product Details</h3>
+        <div class="product-item">
+            <img src="/uploads/re-product-image/<%=item.productId.productImage[0]%>" alt="<%=item.productId.productName%>">
+            <div>
+                <p><strong>Name: </strong><%=item.productId.productName%></p>
+                <p><strong>Size: </strong><%=item.size%></p>
+                <p><strong>Quantity: </strong><%=item.quantity%></p>
+                <p><strong>Price: </strong>₹ <%=item.price%></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delivery address -->
+    <div class="box shadow-sm p-3 mb-5 bg-body rounded">
+        <h3>Delivery Address</h3>
+        <div class="detail-row">
+            <strong><%= address.name %></strong>
+        </div>
+        <div class="detail-row">
+            <%= address.building %>, <%= address.area %><br>
+            <% if (address.landmark) { %>
+                <%= address.landmark %><br>
+            <% } %>
+            <%= address.city %>, <%= address.state %> - <%= address.pincode %><br>
+            Phone: <%= address.phone %>
+            <% if (address.alternatePhone) { %>
+                , Alt: <%= address.alternatePhone %>
+            <% } %>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded',()=>{
+    document.getElementById('statusForm').addEventListener('submit', async function(event){
+        event.preventDefault()
+
+        const id = document.getElementById('orderId').value
+        const itemId = document.getElementById('itemId').value
+        const status = document.getElementById('orderStatus').value
+        const deliveryDate = new Date(document.getElementById('deliveryDate').value)
+        deliveryDate.setHours(0,0,0,0) 
+        const today = new Date()
+        today.setHours(0,0,0,0)
+
+        document.getElementById('errorMessage').style.display = 'none'
+        document.getElementById('errorMessage').innerHTML = ''
+
+        if(isNaN(deliveryDate.getTime()) || deliveryDate <= today){
+            document.getElementById('errorMessage').style.display = 'block'
+            document.getElementById('errorMessage').innerHTML = "Invalid Delivery Date"
+            return
+        }
+
+
+        await fetch('/admin/orders/view_order', {
+            method: 'post',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ id, itemId, status, deliveryDate })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = '/admin/orders'
+            } else {
+                window.location.href = '/admin/pageNotFound'
+            }
+        })
+        .catch(err => {
+            window.location.href = '/admin/pageNotFound'
+        })
+    })
+})
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<%- include("../../views/partials/admin/footer") %>

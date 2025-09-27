@@ -1,0 +1,490 @@
+<%- include("../../views/partials/admin/header") %>
+
+  <head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+      .container {
+        display: flex;
+
+      }
+
+      /* Left Add Coupon Box */
+      .form-box {
+        flex: 1;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .form-box h2 {
+        margin-bottom: 15px;
+        text-align: center;
+      }
+
+      .form-group {
+        margin-bottom: 12px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 5px;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+      }
+
+      .btn-submit {
+        width: 100%;
+        padding: 10px;
+        background: black;
+        border: none;
+        color: #fff;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 15px;
+      }
+
+      /* Right Table */
+      .table-box {
+        flex: 2;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      table th,
+      table td {
+        border: 1px solid #eee;
+        padding: 10px;
+        text-align: center;
+      }
+
+      table th {
+        background: #f1f1f1;
+      }
+
+      .btn {
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        border: none;
+      }
+
+      .btn-edit {
+        background: #07daff;
+        color: #fff;
+      }
+
+      .btn-delete {
+        background: #dc3545;
+        color: #fff;
+      }
+    </style>
+  </head>
+
+  <body>
+    <section class="content-main">
+      <!-- Page Header -->
+      <div class="content-header mb-4">
+        <h2 class="content-title card-title">Coupons</h2>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="row mb-4 justify-content-center">
+        <div class="col-md-8">
+          <form action="/admin/coupon" method="get" id="searchForm">
+            <div class="d-flex align-items-center gap-2">
+              <!-- Search input and X button -->
+              <div class="position-relative flex-grow-1">
+                <input type="text" class="form-control rounded-pill pe-5" placeholder="Search coupons..." name="search"
+                  id="searchInput" value="<%=search%>" />
+                <button type="button"
+                  class="btn position-absolute top-50 end-0 translate-middle-y me-3 p-0 border-0 bg-transparent"
+                  onclick="resetPage()" title="Clear">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+              <!-- Submit -->
+              <button class="btn btn-dark px-4 rounded-pill" type="submit">
+                Search
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="card">
+        <div class="card-body">
+          <div class="row">
+            <!-- Add Coupon Form -->
+            <div class="col-md-3">
+              <form id="couponForm" method="POST" >
+                <div class="mb-3">
+                  <label for="couponName" class="form-label">Coupon Name</label>
+                  <input type="text" name="couponName" placeholder="Type here" class="form-control" id="couponName"
+                    required />
+                    <div class="invalid-feedback" id="couponNameError"></div>
+                </div>
+
+                 <div class="mb-3">
+                  <label for="couponName" class="form-label">Coupon Code</label>
+                  <input type="text" name="couponCode" placeholder="Type here" class="form-control" id="couponCode"
+                    required />
+                    <div class="invalid-feedback" id="couponCodeError"></div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="startDate" class="form-label">Start Date</label>
+                  <input type="date" name="startDate" class="form-control" id="startDate" required />
+                  <div class="invalid-feedback" id="startDateError"></div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="endDate" class="form-label">End Date</label>
+                  <input type="date" name="endDate" class="form-control" id="endDate" required />
+                  <div class="invalid-feedback" id="endDateError"></div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="offerType" class="form-label">Offer Type</label>
+                  <select id="offerType" name="offerType" class="form-select" onchange="toggleOfferInput()" required>
+                    <option value="">-- Select Offer Type --</option>
+                    <option value="percentage">Percentage</option>
+                    <option value="flat">Flat Price</option>
+                  </select>
+                  <div class="invalid-feedback" id="offerTypeError"></div>
+                </div>
+
+                <!-- Percentage Input -->
+                <div class="mb-3 d-none" id="percentageField">
+                  <label for="offerPercentage" class="form-label">Offer Percentage (%)</label>
+                  <input type="number" name="offerPercentage" placeholder="Enter discount %"
+                    class="form-control" id="offerPercentage" />
+                    <div class="invalid-feedback" id="percentageError"></div>
+                </div>
+
+                <!-- Flat Price Input -->
+                <div class="mb-3 d-none" id="flatField">
+                  <label for="flatOffer" class="form-label">Offer Flat Price</label>
+                  <input type="number"  name="flatOffer" placeholder="Enter flat discount price"
+                    class="form-control" id="flatOffer" />
+                    <div class="invalid-feedback" id="flatPriceError"></div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="minPrice" class="form-label">Minimum Price</label>
+                  <input type="number" name="minPrice" placeholder="Minimum order value" class="form-control"
+                    id="minPrice" required />
+                    <div class="invalid-feedback" id="minPriceError"></div>
+                </div>
+
+                <button class="btn btn-dark w-100" type="submit">Add Coupon</button>
+              </form>
+            </div>
+
+            <!-- Coupon Table -->
+            <div class="col-md-9">
+              <div class="table-responsive">
+                <table class="table table-hover shadow-sm">
+                  <thead class="table-light">
+                    <tr>
+                      <th>#</th>
+                      <th>Name</th>
+                      <th>Code</th>
+                      <th>Start Date</th>
+                      <th>End Date</th>
+                      <th>Offer Type</th>
+                      <th>Offer</th>
+                      <th>Min Price</th>
+                      <!-- <th>Edit</th> -->
+                      <th>Delete</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <%coupons.forEach((coupon, index)=>{%>
+                    <tr>
+                      <td><%= index + 1%></td>
+                      <td><%= coupon.name%></td>
+                      <td class="text-capitalize"><%= coupon.code %></td>
+                      <td><%= new Date(coupon.startDate).toLocaleDateString("en-GB")%></td>
+                      <td><%= new Date(coupon.endDate).toLocaleDateString("en-GB")%></td>
+                      <td class="text-capitalize"><%= coupon.offerType %></td>
+                      <%if(coupon.offerType === "percentage"){%>
+                        <td><%=coupon.offerPercentage%>%</td>
+                        <%}else if(coupon.offerType === "flat"){%>
+                          <td>Rs.<%= coupon.flatOffer%></td>
+                          <%}%>
+                      <td><%= coupon.minimumPrice%></td>
+                      <!-- <td>
+                        <a href="/admin/edit_coupon" class="btn btn-info btn-sm text-white">Edit</a>
+                      </td> -->
+                      <td>
+                        <a 
+                        href="#" 
+                        class="btn btn-danger btn-sm" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#deleteModal" 
+                        data-id="<%=coupon._id%>">Delete</a>
+                      </td>
+                    </tr>
+                    <%})%>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- delete modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-3">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to delete this coupon?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary rounded-2" data-bs-dismiss="modal">Cancel</button>
+        <a id="confirmDeleteBtn" href="#" class="btn btn-danger rounded-2">Delete</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+      <!-- Pagination -->
+
+       <div class="pagination d-flex justify-content-center mt-4">
+      <% if (currentPage > 1) { %>
+        <a href="/admin/coupon?page=<%= currentPage - 1 %>" class="btn btn-outline-secondary mx-1">&laquo; Previous</a>
+      <% } %>
+
+      <% for (let i = 1; i <= totalPages; i++) { %>
+        <% if (i === currentPage) { %>
+          <span class="btn  mx-1"><%= i %></span>
+        <% } else { %>
+          <a href="/admin/coupon?page=<%= i %>" class="btn btn-outline-secondary mx-1"><%= i %></a>
+        <% } %>
+      <% } %>
+
+      <% if (currentPage < totalPages) { %>
+        <a href="/admin/coupon?page=<%= currentPage + 1 %>" class="btn btn-outline-secondary mx-1">Next &raquo;</a>
+      <% } %>
+    </div>
+
+    </section>
+
+
+    <!-- reset page -->
+    <script>
+      function resetPage() {
+        document.getElementById("searchInput").value = "";
+        document.getElementById("searchForm").submit();
+      }
+    </script>
+
+    <!-- offer price input -->
+    <script>
+      function toggleOfferInput() {
+        const offerType = document.getElementById("offerType").value;
+        const percentageField = document.getElementById("percentageField");
+        const flatField = document.getElementById("flatField");
+
+        percentageField.classList.add("d-none");
+        flatField.classList.add("d-none");
+
+        if (offerType === "percentage") {
+          percentageField.classList.remove("d-none");
+        } else if (offerType === "flat") {
+          flatField.classList.remove("d-none");
+        }
+      }
+    </script>
+
+    <!-- delete coupon -->
+     <script>
+document.addEventListener("DOMContentLoaded", () => {
+  const deleteModal = document.getElementById("deleteModal")
+  const confirmDeleteBtn = document.getElementById("confirmDeleteBtn")
+
+  deleteModal.addEventListener("show.bs.modal", function (event) {
+    const button = event.relatedTarget
+    const couponId = button.getAttribute("data-id")
+    confirmDeleteBtn.href = `/admin/delete_coupon?id=${couponId}`
+  })
+})
+</script>
+
+
+    <!-- form validation -->
+
+    <script>
+
+    document.getElementById("couponForm").addEventListener("submit",async function (e) {
+      e.preventDefault()
+      let isValid = true
+
+      document.querySelectorAll(".is-invalid").forEach(el => el.classList.remove("is-invalid"));
+      document.querySelectorAll(".invalid-feedback").forEach(el => el.innerHTML = "");
+
+    const couponName =document.getElementById('couponName').value.trim()
+    const couponCode = document.getElementById("couponCode").value.trim()
+    const startDate = new Date(document.getElementById("startDate").value)
+    const endDate = new Date(document.getElementById("endDate").value)
+    const offerType = document.getElementById("offerType").value
+    const offerPercentage = document.getElementById("offerPercentage").value
+    const flatOffer = document.getElementById("flatOffer").value
+    const minPrice = document.getElementById("minPrice").value
+
+    const today = new Date()
+    today.setHours(0,0,0,0) // remove time part for comparison
+
+    const codeRegex = /^[A-Za-z0-9_-]{3,20}$/
+    
+
+    // Coupon code validation
+    if (!codeRegex.test(couponCode)) {
+      document.getElementById('couponCode').classList.add('is-invalid')
+      document.getElementById('couponCodeError').innerHTML = "Coupon code must be 3-20 characters and can only contain letters, numbers, underscores, and hyphens."
+      isValid = false
+    }
+
+    //coupon name validation
+    if(!couponName){
+       document.getElementById('couponName').classList.add('is-invalid')
+      document.getElementById('couponNameError').innerHTML = "Enter a coupon name"
+      isValid = false
+    }
+
+    // Start date validation
+    if (isNaN(startDate.getTime()) || startDate < today) {
+      console.log(today)
+      console.log(startDate)
+      document.getElementById('startDate').classList.add('is-invalid')
+      document.getElementById('startDateError').innerHTML = "The date cannot be the day before today"
+      isValid = false
+    }
+
+    // End date validation
+    if (isNaN(endDate.getTime()) || endDate < startDate) {
+      document.getElementById('endDate').classList.add('is-invalid')
+      document.getElementById('endDateError').innerHTML = "The end date cannot be the day before the start date"
+      isValid = false
+    }
+
+    // Offer type validation
+    if (!offerType) {
+      document.getElementById('offerType').classList.add('is-invalid')
+      document.getElementById('offerTypeError').innerHTML = "Please select an offer type"
+      isValid = false
+    }
+
+    // Percentage validation
+    if (offerType === "percentage") {
+      if (!offerPercentage || offerPercentage <=0 || offerPercentage > 90) {
+        document.getElementById('offerPercentage').classList.add('is-invalid')
+        document.getElementById('percentageError').innerHTML = "Percentage should be between 1% and 90%."
+        isValid = false
+      }
+    }
+
+    // Flat price validation
+    if (offerType === "flat") {
+      if (!flatOffer || flatOffer <= 0) {
+        document.getElementById('flatOffer').classList.add('is-invalid')
+        document.getElementById('flatPriceError').innerHTML = "Flat price must a positive value"
+        isValid = false
+      }
+      if(flatOffer > 1000){
+        document.getElementById('flatOffer').classList.add('is-invalid')
+        document.getElementById('flatPriceError').innerHTML = "The maximum flat price is 1000"
+        isValid = false
+      }
+    }
+
+    // Minimum price validation
+    if (!minPrice || minPrice <= 0) {
+        document.getElementById('minPrice').classList.add('is-invalid')
+        document.getElementById('minPriceError').innerHTML = "Minimum price must be greater than 0."
+        isValid = false
+    }
+
+    // Minimum price > flat offer validation
+    if (offerType === "flat" && parseFloat(minPrice) <= parseFloat(flatOffer)) {
+        document.getElementById('minPrice').classList.add('is-invalid')
+        document.getElementById('minPriceError').innerHTML = "Minimum price must be greater than flat offer price."
+        isValid = false
+    }
+
+    if (!isValid) {
+      return
+    }
+
+     const couponData = {
+      couponName,
+      couponCode,
+      startDate: document.getElementById("startDate").value,
+      endDate: document.getElementById("endDate").value,
+      offerType,
+      offerPercentage,
+      flatOffer,
+      minPrice
+    }
+
+    try {
+    
+      const response = await fetch("/admin/add_coupon", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(couponData)
+      })
+
+      const result = await response.json();
+
+      if (result.success) {
+         Swal.fire({
+        icon: 'success',
+        title: 'success',
+        text: result.message
+      }).then(()=> location.reload())
+        
+      } else {
+       Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: result.message
+      })
+      }
+
+    } catch (error) {
+
+       Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Something went wrong. Please try again'
+      })
+    }
+  
+  });
+    </script>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <%- include("../../views/partials/admin/footer") %>

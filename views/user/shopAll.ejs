@@ -1,0 +1,338 @@
+<%- include("../partials/user/header")%>
+  <head>
+    <style>
+  .sidebar-list a.selected {
+    background-color: #212529;
+    color: #fff !important;
+    padding: 5px 10px;
+    border-radius: 5px;
+    display: inline-block;
+  }
+  .category-link.active {
+  color:black;
+  font-weight: bold;
+  display: inline-block;
+} 
+</style>
+  </head>
+
+  <div class="shop-container">
+
+    <aside class="sidebar">
+      <!-- <h4 class="text-uppercase mb-5" style="font-size: 1rem;">indian and fusion wear</h4> -->
+
+      <div class="sidebar-section ">
+        <form action="/shop_all" method="get" id="searchForm">
+  <div class="d-flex justify-content-between align-items-center" style="max-width: 500px;">
+    <div class="position-relative w-100 me-2">
+      <input 
+        type="text" 
+        placeholder="Search..." 
+        class="form-control ps-3 pe-5" 
+        name="search" 
+        id="searchInput" 
+        value="<%= search %>"
+      >
+      <!-- Clear Button -->
+      <button 
+        class="btn position-absolute top-50 translate-middle-y end-0 me-2 p-0 border-0 bg-transparent" 
+        type="button" 
+        onclick="resetPage()" 
+        title="Clear"
+      >
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <button class="btn btn-light" type="submit">Search</button>
+  </div>
+</form>
+
+
+      </div>
+      <div class="sidebar-section">
+        <h3>Categories</h3>
+        <ul class="sidebar-list">
+          <%for(let i=0; i<category.length; i++){%>
+            <li class="text-capitalize">
+              <a href="#" 
+              id="categoryName" 
+              class="category-link <%= (category[i]._id.toString() === (selectedCategory ? selectedCategory.toString() : '')) ? 'active' : '' %>" 
+              onclick="return applyFilter(event, 'category', '<%= category[i]._id %>', 'categoryName')">
+                <%=category[i].categoryName%>
+              </a>
+            </li>
+            <%}%>
+        </ul>
+      </div>
+
+      <div class="sidebar-section">
+        <h3>Price</h3>
+        <ul class="sidebar-list">
+
+          <li><a href="#" onclick="return applyPriceFilter(event, 0, 500)">Rs.0 - Rs.500</a></li>
+          <li><a href="#" onclick="return applyPriceFilter(event,500, 1000)">Rs.500 - Rs.1000</a></li>
+          <li><a href="#" onclick="return applyPriceFilter(event,1000, 1500)">Rs.1000 - Rs.1500</a></li>
+          <li><a href="#" onclick="return applyPriceFilter(event,1500, 100000)">Abouve Rs.1500</a></li>
+
+        </ul>
+      </div>
+
+
+      <div class="sidebar-section">
+        <h3>Sort By</h3>
+        <ul class="sidebar-list">
+          <li><a href="#" id="lowToHigh" onclick="return applyFilter(event, 'sort', 'low', 'lowToHigh')">Price - Low to High</a></li>
+          <li><a href="#" id="highToLow" onclick="return applyFilter(event, 'sort', 'high', 'highToLow')">Price - High to Low</a></li>
+          <li><a href="#" id="aToz" onclick="return applyFilter(event, 'sort', 'aToz', 'aToz')">aA - zZ</a></li>
+          <li><a href="#" id="zToa" onclick="return applyFilter(event, 'sort', 'zToa', 'zToa')">zZ - aA</a></li>
+
+        </ul>
+      </div>
+    </aside>
+
+     <!-- Products -->
+    
+      
+      <main class="shop-products container mt-4">
+        <div class="row">
+          
+          <% for (let i = 0; i < products.length; i++) { %>
+            <div class="col-md-3 mb-4">
+              <div class="product-item image-zoom-effect link-effect">
+                <div class="image-holder position-relative">
+                  <a href="/product_details?id=<%= products[i]._id %>">
+                    <img src="/uploads/re-product-image/<%= products[i].productImage[0] %>" alt="<%= products[i].productName %>" class="product-image img-fluid">
+                  </a>
+                  <!-- wishlist icon -->
+                  <a href="javascript:void(0)" class="btn-icon btn-wishlist wishlist-btn" data-id="<%=products[i]._id%>">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <use xlink:href="#heart"></use>
+                    </svg>
+                  </a>
+                  <div class="product-content">
+                    <h5 class="element-title text-uppercase fs-5 mt-3">
+                      <a href="index.html"><%= products[i].productName %></a>
+                    </h5>
+                    <p>Price: Rs.<%=products[i].salePrice%>
+                      <%if(products[i].offer && products[i].offer > 0){%>
+                      <strike>Rs.<%=products[i].regularPrice%></strike> 
+                    <%}%>
+                    </p>
+
+                    <!-- add to cart -->
+                    <!-- <a href="#" class="text-decoration-none add-to-cart-link" data-product-id="<%= products[i]._id%>">ADD TO CART</a> -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% } %>
+         
+        </div>
+      
+     
+      <div class="pagination d-flex justify-content-center mt-4">
+        <% if (currentPage > 1) { %>
+          <a href="#" onclick="return goToPage(event, '<%= currentPage - 1 %>')" class="btn btn-outline-secondary mx-1">&laquo; Previous</a>
+        <% } %>
+      
+        <% for (let i = 1; i <= totalPages; i++) { %>
+          <% if (i === currentPage) { %>
+            <span class="btn  mx-1"><%= i %></span>
+          <% } else { %>
+            <a href="#" onclick="return goToPage(event,'<%= i %>')" class="btn btn-outline-secondary mx-1"><%= i %></a>
+          <% } %>
+        <% } %>
+      
+        <% if (currentPage < totalPages) { %>
+          <a href="#" onclick="return goToPage(event, '<%= currentPage + 1 %>')" class="btn btn-outline-secondary mx-1">Next &raquo;</a>
+        <% } %>
+      </div>
+    </main>
+
+  </div>
+
+
+  <!-- footer -->
+   <%- include("../partials/user/footer")%>
+
+
+   <!-- apply filter and sort -->
+
+   <script>
+  function getQueryParams() {
+    const params = new URLSearchParams(window.location.search);
+    return params;
+  }
+
+  function applyFilter(event, key, value, id) {
+    event.preventDefault() 
+
+    document.querySelectorAll('.category-link').forEach((link)=>{
+      link.classList.remove('active')
+    })
+
+    event.target.classList.add('active')
+
+    const params = getQueryParams()
+    params.set(key, value)
+    params.set("page", 1)
+    window.location.href = `/shop_all?${params.toString()}`;
+    return false
+  }
+
+  function applyPriceFilter(event, gte, lte) {
+    event.preventDefault()
+    console.log('applyPriceFilter')
+    const params = getQueryParams();
+    params.set("gte", gte);
+    params.set("lte", lte);
+    params.set("page", 1);
+    window.location.href = `/shop_all?${params.toString()}`;
+    return false
+  }
+
+   function goToPage(event, pageNum) {
+    event.preventDefault()
+    const params = getQueryParams();
+    params.set("page", pageNum);
+    window.location.href = `/shop_all?${params.toString()}`;
+    return false
+  }
+</script>
+
+
+   <!-- search -->
+  <script>
+
+    function resetPage() {
+    const input = document.getElementById('searchInput');
+    input.value = ''; 
+
+    // reload the page without search param
+    const url = new URL(window.location.href);
+    url.searchParams.delete('search');
+    window.location.href = url.toString();
+  }
+
+  </script>
+
+<!-- add to wishlist -->
+  <script>
+
+    document.addEventListener("DOMContentLoaded", function () {
+    const wishlistButtons = document.querySelectorAll(".wishlist-btn");
+
+    wishlistButtons.forEach(button => {
+      button.addEventListener("click", async function () {
+        const productId = this.getAttribute("data-id");
+
+        try {
+          const response = await fetch(`/addtoWishlist?id=${productId}`, {
+            method: 'GET'
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            showPopup(data.message || "Added to wishlist", "success")
+            this.classList.add("active");
+            const svg = this.querySelector('svg')
+            svg.setAttribute("fill", "red")
+          } else {
+            showPopup(data.message || "Somthing went wrong", "error");
+          }
+        } catch (err) {
+          console.error("Wishlist error:", err);
+        }
+      });
+    });
+  });
+
+
+  //popup 
+
+   function showPopup(message, type) {
+    const popup = document.createElement('div')
+    popup.textContent = message
+    popup.style.position = 'fixed'
+    popup.style.top = '20px'
+    popup.style.left = '20px'
+    popup.style.padding = '12px 20px'
+    popup.style.borderRadius = '5px'
+    popup.style.color = '#fff'
+    popup.style.zIndex = '9999'
+    popup.style.backgroundColor = '#000'
+    popup.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)'
+    document.body.appendChild(popup)
+
+    setTimeout(() => {
+      popup.remove()
+    }, 2000)
+  }
+  </script>
+
+  <!-- add to cart -->
+
+  <script>
+//   document.addEventListener('DOMContentLoaded', () => {
+//     const cartLinks = document.querySelectorAll('.add-to-cart-link')
+
+//     cartLinks.forEach(link => {
+//       link.addEventListener('click', async (e) => {
+//         e.preventDefault()
+//         const productId = link.getAttribute('data-product-id')
+
+//         try {
+//           const res = await fetch(`/addToCart?productId=${productId}`)
+//           const data = await res.json()
+
+//           if (data.success === false && data.redirect) {
+//             showPopup("This product is not available.", "error")
+//             setTimeout(() => {
+//               window.location.href = data.redirect
+//             }, 2000)
+//           } else {
+//             showPopup(data.message || "Added to cart", "success")
+//           }
+
+//         } catch (error) {
+//           console.error('Error:', error)
+//           showPopup("Failed to add to cart.", "error")
+//         }
+//       })
+//     })
+//   })
+
+//   function showPopup(message, type) {
+//     const popup = document.createElement('div')
+//     popup.textContent = message
+//     popup.style.position = 'fixed'
+//     popup.style.top = '20px'
+//     popup.style.left = '20px'
+//     popup.style.padding = '12px 20px'
+//     popup.style.borderRadius = '5px'
+//     popup.style.color = '#fff'
+//     popup.style.zIndex = '9999'
+//     popup.style.backgroundColor = '#000'
+//     popup.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)'
+//     document.body.appendChild(popup)
+
+//     setTimeout(() => {
+//       popup.remove()
+//     }, 2000)
+//   }
+// </script>
+
+    <script src="js/jquery.min.js"></script>
+    <script src="js/plugins.js"></script>
+    <script src="js/SmoothScroll.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe"
+      crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+    <script src="js/script.min.js"></script>
+
+    
+    </body>
+
+    </html>

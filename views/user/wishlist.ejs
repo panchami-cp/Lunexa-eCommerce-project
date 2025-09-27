@@ -1,0 +1,77 @@
+<%- include("../partials/user/header")%>
+
+
+<div class="container-fluid">
+
+    <div class="shop-container">
+
+      <main class="shop-products container mt-4">
+        <div class="row">
+          <h4 class="mb-5">My Wishlist (<%=totalWishProducts%>)</h4>
+          <% for (let i = 0; i < products.length; i++) { %>
+            <div class="col-md-3 mb-4">
+              <div class="product-item image-zoom-effect link-effect">
+                <div class="image-holder position-relative">
+                  <a href="/product_details?id=<%= products[i]._id %>">
+                    <img src="/uploads/re-product-image/<%= products[i].productImage[0] %>" alt="<%= products[i].productName %>" class="product-image img-fluid">
+                  </a>
+                   <a href="/removeFromWishlist?id=<%=products[i]._id%>" 
+                    class="btn-close position-absolute top-0 end-0 m-2" 
+                    aria-label="Close"></a>
+                  <div class="product-content">
+                    <h5 class="element-title text-uppercase fs-5 mt-3">
+                      <a href="index.html"><%= products[i].productName %></a>
+                    </h5>
+                    <p>Price: Rs.<%= products[i].salePrice %></p>
+                    <!-- <a href="#" class="text-decoration-none">ADD TO CART</a> -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% } %>
+         
+        </div>
+      
+     
+      <div class="pagination d-flex justify-content-center mt-4">
+        <% if (currentPage > 1) { %>
+          <a href="/wishlist?page=<%= currentPage - 1 %>"  class="btn btn-outline-secondary mx-1">&laquo; Previous</a>
+        <% } %>
+      
+        <% for (let i = 1; i <= totalPages; i++) { %>
+          <% if (i === currentPage) { %>
+            <span class="btn  mx-1"><%= i %></span>
+          <% } else { %>
+            <a href="/wishlist?page=<%= i %>"  class="btn btn-outline-secondary mx-1"><%= i %></a>
+          <% } %>
+        <% } %>
+      
+        <% if (currentPage < totalPages) { %>
+          <a href="/wishlist?page=<%= currentPage + 1 %>"  class="btn btn-outline-secondary mx-1">Next &raquo;</a>
+        <% } %>
+      </div>
+    </main>
+
+  </div>
+
+
+</div>
+
+
+<%- include("../partials/user/footer")%>
+
+ </script>
+
+    <script src="js/jquery.min.js"></script>
+    <script src="js/plugins.js"></script>
+    <script src="js/SmoothScroll.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe"
+      crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+    <script src="js/script.min.js"></script>
+
+    
+    </body>
+
+    </html>

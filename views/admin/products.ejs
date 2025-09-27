@@ -1,0 +1,266 @@
+<%- include("../../views/partials/admin/header") %>
+
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <style>
+    .form-label {
+      font-weight: 500;
+    }
+
+    .table td,
+    .table th {
+      vertical-align: middle;
+    }
+
+    a {
+      text-decoration: none;
+    }
+
+    .btn-sm-custom {
+      width: 100px;
+      padding: 6px 12px;
+      font-size: 0.875rem;
+    }
+
+    .btn-action {
+      width: 80px;
+    }
+  </style>
+</head>
+<div class="container-fluid px-4">
+<!-- Page Header -->
+<div class="content-header mb-4 mt-4">
+  <h2 class="content-title card-title">Products</h2>
+</div>
+
+<!-- Search Form and Add Button -->
+<div class="row mb-4 justify-content-center">
+  <div class="col-md-10">
+    <div class="d-flex justify-content-between align-items-center">
+      <!-- Search Form -->
+      <form action="/admin/products" method="get" id="searchForm" class="flex-grow-1 me-3">
+        <div class="d-flex align-items-center gap-2">
+          <div class="position-relative flex-grow-1">
+            <input 
+              type="text" 
+              class="form-control rounded-pill pe-5" 
+              placeholder="Search products or brands" 
+              name="search" 
+              id="searchInput" 
+              value="<%= search %>"
+            >
+            <button 
+              type="button" 
+              class="btn position-absolute top-50 end-0 translate-middle-y me-3 p-0 border-0 bg-transparent" 
+              onclick="resetPage()" 
+              title="Clear"
+            >
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <button class="btn btn-dark px-4 rounded-pill" type="submit">Search</button>
+        </div>
+      </form>
+
+      <!-- Add Product Button -->
+      <a href="/admin/add_product" class="btn btn-dark px-4 rounded-pill">Add Product</a>
+    </div>
+  </div>
+</div>
+
+<!-- Products Table -->
+<div class="right mt-4">
+  <table class="table table-hover shadow-sm">
+    <thead class="table-light">
+      <tr>
+        <th>Image</th>
+        <th>Product Name</th>
+        <th>Category</th>
+        <th>Regular Price</th>
+        <th>Sale Price</th>
+        <th>Category Offer</th>
+        <th>Product Offer</th>
+        <th>Offer Update</th>
+        <th>Quantity</th>
+        <th>Action</th>
+        <th>Edit</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% for (let i = 0; i < data.length; i++) { %>
+        <tr>
+          <td>
+            <div style="width: 3rem; height: 3rem;">
+              <img src="/uploads/re-product-image/<%=data[i].productImage[0]%>" alt="">
+            </div>
+          </td>
+          <td class="text-capitalize"><%= data[i].productName %></td>
+          <td class="text-capitalize"><%= data[i].category.categoryName %></td>
+          <td><%= data[i].regularPrice %></td>
+          <td><%=data[i].salePrice? data[i].salePrice: data[i].regularPrice%></td>
+          <th><%=data[i].category.offer%>%</th>
+          <td><%=data[i].offer%>%</td>
+          <td>
+            <%if(!data[i].offer){%>
+            <div class="d-flex gap-2">
+              
+              <a href="#" 
+                class="btn btn-info text-white btn-sm-custom" 
+                data-bs-toggle="modal" 
+                data-bs-target="#addOfferModal"
+                data-id="<%=data[i]._id%>">Add Offer</a>
+              <%}else{%>
+              <a href="/admin/remove_offer?id=<%=data[i]._id%>" class="btn btn-danger text-white btn-sm-custom">Remove</a>
+              <%}%>
+            </div>
+          </td>
+          <td><%= data[i].totalQuantity %></td>
+          <td>
+            <% if (!data[i].isBlocked) { %>
+              <a href="/admin/block_product?id=<%= data[i]._id %>" class="btn btn-danger text-white btn-action">Block</a>
+            <% } else { %>
+              <a href="/admin/unblock_product?id=<%= data[i]._id %>" class="btn btn-success text-white btn-action">Unblock</a>
+            <% } %>
+          </td>
+          <td>
+            <a href="/admin/edit_product?id=<%= data[i]._id %>" class="btn btn-info text-white btn-action">Edit</a>
+          </td>
+        </tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<!-- Pagination -->
+<div class="pagination d-flex justify-content-center mt-4">
+  <% if (currentPage > 1) { %>
+    <a href="/admin/products?page=<%= currentPage - 1 %>" class="btn btn-outline-secondary mx-1">&laquo; Previous</a>
+  <% } %>
+
+  <% for (let i = 1; i <= totalPages; i++) { %>
+    <% if (i === currentPage) { %>
+      <span class="btn  mx-1"><%= i %></span>
+    <% } else { %>
+      <a href="/admin/products?page=<%= i %>" class="btn btn-outline-secondary mx-1"><%= i %></a>
+    <% } %>
+  <% } %>
+
+  <% if (currentPage < totalPages) { %>
+    <a href="/admin/products?page=<%= currentPage + 1 %>" class="btn btn-outline-secondary mx-1">Next &raquo;</a>
+  <% } %>
+</div>
+</div>
+
+
+<!-- add offer modal -->
+
+<div class="modal fade" id="addOfferModal" tabindex="-1" aria-labelledby="addOfferLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      
+      <div class="modal-header">
+        <h5 class="modal-title" id="addOfferLabel">Add Offer</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <form id="addOfferForm">
+          <div class="mb-3">
+            <label for="offerInput" class="form-label">Add offer in percentage</label>
+            <input type="number" class="form-control" id="offerInput" name="offerPercentage" placeholder="Enter % discount">
+            <div id="offerInputError" class="invalid-feedback"></div>
+          </div>
+          <input type="hidden" id="productIdInput" name="productId"> 
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" form="addOfferForm" class="btn btn-primary">Add offer</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!--  -->
+
+<script>
+const addOfferModal = document.getElementById('addOfferModal')
+
+addOfferModal.addEventListener('show.bs.modal', function(event){
+
+  const button = event.relatedTarget
+  const productId = button.getAttribute('data-id')
+  document.getElementById('productIdInput').value = productId
+
+})
+
+document.getElementById('addOfferForm').addEventListener('submit',async function(e){
+  e.preventDefault()
+
+  const inputOffer = document.getElementById('offerInput').value
+  const productId = document.getElementById('productIdInput').value
+  const inputOfferValue = inputOffer.trim()
+
+  if(!inputOfferValue || inputOfferValue <= 0){
+    document.getElementById('offerInput').classList.add('is-invalid')
+    document.getElementById('offerInputError').innerText = "Invalid/Empty field"
+    return
+  }else{
+    document.getElementById('offerInput').classList.remove('is-invalid')
+  }
+
+  try {
+    const response = await fetch('/admin/add_offer', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ offerValue:inputOfferValue, productId })
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+
+      const modal = bootstrap.Modal.getInstance(addOfferModal);
+      modal.hide();
+      location.reload();
+
+    } else {
+
+      Swal.fire({
+        icon: 'error',
+        title: "Error",
+        text: result.message || 'Something went wrong'
+      })
+
+    }
+
+  } catch (err) {
+
+    console.error('Error:', err)
+
+    const fallbackUrl = redirectUrl || "/admin/products";
+
+
+    window.location.href = fallbackUrl
+  }
+
+})
+
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<%- include("../../views/partials/admin/footer") %>
+<script>
+    function resetPage(){
+        document.getElementById("searchInput").value = ""
+        document.getElementById('searchForm').submit()
+    }
+</script>

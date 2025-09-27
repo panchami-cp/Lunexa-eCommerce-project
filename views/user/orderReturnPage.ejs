@@ -1,0 +1,82 @@
+<%- include("../partials/user/header") %>
+
+<head>
+    <link rel="stylesheet" href="/css/user/orderCancelPage.css">
+</head>
+
+
+<div class="container-fluid">
+    <div class="cancel-order-container">
+    <!-- Order ID -->
+    <div class="order-header">
+        <h5>Order ID: <%= order.orderId %></h5>
+    </div>
+
+    <form action="/return_order" method="POST" id="cancelOrderForm">
+        <input type="hidden" name="itemId" value="<%= item._id %>" id="itemId">
+        
+
+        <!-- Big Box for Products -->
+        <div class="products-box">
+                <div class="order-item">
+                    <!-- Product Image -->
+                    <img src="/uploads/re-product-image/<%= item.productId.productImage[0] %>" 
+                         alt="<%= item.productId.productName %>" 
+                         class="product-image">
+
+                    <!-- Product Details -->
+                    <div class="product-details">
+                        <h4><%= item.productId.productName %></h4>
+                        <p>Size: <%= item.size %></p>
+                        <p>Price: ₹<%= item.price %></p>
+                        <p>Quantity: <%= item.quantity %></p>
+                    </div>
+                </div>
+        </div>
+        <div id="returnReasonContainer" class="products-box mt-3">
+            <h6>Reason: </h6>
+            <textarea name="reason" id="reason" placeholder="Type hear..."></textarea>
+        </div>
+
+        <!-- Common Cancel Button -->
+        <div class="cancel-btn-container">
+            <div id="errorMassage" class="text-danger"></div>
+            <button type="submit" class="cancel-btn"  id="cancelBtn">Confirm Return</button>
+        </div>
+    </form>
+</div>
+</div>
+
+
+<!-- <script>
+    document.getElementById("cancelOrderForm").addEventListener("submit", function(event) {
+        
+    event.preventDefault();
+
+    if (!selected) {
+        document.getElementById('errorMassage').style.display = 'block';
+        document.getElementById('errorMassage').innerHTML = "Select the products to return";
+        return;
+    }else{
+        this.submit()
+    }
+
+});
+</script> -->
+
+
+
+<!-- Footer -->
+<%- include("../partials/user/footer") %>
+
+<script src="js/jquery.min.js"></script>
+<script src="js/plugins.js"></script>
+<script src="js/SmoothScroll.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"
+  integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe"
+  crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+<script src="js/script.min.js"></script>
+
+</body>
+</html>

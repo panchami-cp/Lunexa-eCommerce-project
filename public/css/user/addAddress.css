@@ -1,0 +1,13 @@
+body {
+      background-color: #f9f9f9;
+    }
+    .form-label {
+      font-weight: 500;
+    }
+    .form-control {
+      border: 1px solid #cce3d8;
+    }
+    .submit-btn {
+      background-color: #12775d;
+      color: white;
+    }

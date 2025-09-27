@@ -1,0 +1,147 @@
+
+
+*{
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+    
+}
+body{
+    line-height: 1.5;
+    color: #333;
+}
+.breadcrumb {
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+  
+  .breadcrumb a {
+    text-decoration: none;
+    color: #007bff;
+  }
+  .breadcrumb span {
+    color: #555;
+  }
+.card-wrapper{
+    max-width: 1100px;
+    margin: 0 auto;
+    
+}
+.card{
+  padding: 1rem;
+}
+img{
+    width: 100%;
+    display: block;
+} 
+.img-display{
+    overflow: hidden;
+}
+
+.img-showcase{
+    display: flex;
+    width: 100%;
+    transition: all 0.5s ease;
+    position: relative;
+}
+.img-showcase img{
+    min-width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 0 0;
+}  
+
+.img-select{
+    display: flex;
+}
+.img-item{
+    margin: 0.3rem;
+}
+.img-item:nth-child(1),
+.img-item:nth-child(2),
+.img-item:nth-child(3){
+    margin-right: 0;
+}
+.img-item:hover{
+    opacity: 0.8;
+}
+
+.details {
+    flex: 1;
+  }
+  
+  .price {
+    font-size: 20px;
+    margin: 10px 0;
+  }
+  
+  .offer {
+    color: red;
+    font-weight: bold;
+    margin-left: 10px;
+  }
+  
+  .rating {
+    color: orange;
+    margin: 10px 0;
+  }
+  
+  .stock {
+    margin: 10px 0;
+  }
+  
+  ul {
+    list-style: square;
+    padding-left: 20px;
+  }
+  
+  .btn {
+
+    background-color: #000;
+    color: #fff;
+    padding: 10px 16px;
+    margin: 10px 0;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .recommendations {
+    margin-top: 40px;
+  }
+  
+  .rec-products {
+    display: flex;
+    gap: 20px;
+  }
+  
+  .rec-item img {
+    width: 150px;
+    height: 200px;
+    object-fit: cover;
+  }
+.product-content{
+    padding: 2rem 1rem;
+}
+
+
+@media screen and (min-width: 992px){
+    .card{
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-gap: 1.5rem;
+    }
+    .card-wrapper{
+        /* height: 100vh; */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .product-imgs{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .product-content{
+        padding-top: 0;
+    }
+}
