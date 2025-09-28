@@ -7,6 +7,7 @@ const productController = require('../controller/user/productController')
 const orderController = require('../controller/user/orderController')
 const {userAuth, adminAuth} = require('../middlewares/auth')
 const uploadProfile = require('../middlewares/profileUploads')
+const { rotate } = require('pdfkit')
 
 //User controller
 router.get('/',usercontroller.loadHomePage)
@@ -79,6 +80,7 @@ router.post('/return_order', userAuth, orderController.returnOrder)
 router.get('/download_invoice', userAuth, orderController.downloadInvoice)
 router.post('/apply_coupon', userAuth, orderController.applyCoupon)
 router.post('/remove_coupon', userAuth, orderController.removeCoupon)
+router.post('/verify_payment', userAuth, orderController.verifyPayment)
 
 
 module.exports = router

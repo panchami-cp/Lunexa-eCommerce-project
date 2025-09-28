@@ -90,7 +90,7 @@ const orderSchema = new Schema({
         },
         paymentMethod:{
             type: String,
-            enum:['cashOnDelivery', 'razorpay', 'netBanking'],
+            enum:['cashOnDelivery', 'razorpay', 'wallet'],
             required: true
         },
         address:{

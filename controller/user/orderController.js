@@ -8,6 +8,7 @@ const fs = require('fs')
 const path = require('path')
 const PDFDocument = require('pdfkit')
 const razorpay = require('../../config/razorpay')
+const crypto = require('crypto')
 const env = require('dotenv').config()
 const { v4: uuidv4 } = require('uuid')
 const { redirect } = require('express/lib/response')
@@ -179,7 +180,7 @@ const placeOrder = async (req, res)=>{
 
         const finalAmount = appliedCoupon ? req.session.appliedCoupon.payableAmount : cart.totalCartPrice
 
-        //payment method = cash on delivery
+        //cash on delivery
         if(paymentMethod === 'cashOnDelivery'){
             const orderId = uuidv4()
 
@@ -238,10 +239,10 @@ const placeOrder = async (req, res)=>{
 
             req.session.orderId = orderId
 
-            res.json({success: true, redirectUrl: '/order_success'})
+            return res.json({success: true, redirectUrl: '/order_success'})
         }
 
-        // payment method = razorpay
+        // razorpay
         if(paymentMethod === "razorpay"){
             const options = {
                 amount: finalAmount * 100,
@@ -663,6 +664,14 @@ const removeCoupon = async (req, res)=>{
     }
 }
 
+const verifyPayment = async (req, res)=>{
+    try {
+        
+    } catch (error) {
+        
+    }
+}
+
 
 module.exports = {
     loadCheckout,
@@ -676,5 +685,6 @@ module.exports = {
     returnOrder,
     downloadInvoice,
     applyCoupon,
-    removeCoupon
+    removeCoupon,
+    verifyPayment
 }

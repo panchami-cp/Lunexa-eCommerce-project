@@ -154,7 +154,7 @@
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
-  document.getElementById('placeOrderBtn').addEventListener('click', function(event){
+  document.getElementById('placeOrderBtn').addEventListener('click', async function(event){
     const selectedAddress = document.querySelector('input[name="selectedAddress"]:checked')
     const selectedPayment = document.querySelector('input[name="paymentMethod"]:checked')
     const errorMessage = document.getElementById('errorMessage')
@@ -180,8 +180,8 @@
     const paymentMethod = selectedPayment.value
 
 // place order
-
-  fetch('/place_order',{
+try {
+  const res = await fetch('/place_order',{
     method: 'post',
     headers: {'Content-Type':'application/json'},
     body: 
@@ -191,30 +191,64 @@
       })
     
   })
-  .then(res=>res.json())
-  .then((data)=>{
 
-    if(data.success){
+  const data = await res.json()
 
+  if(!data.success){
+    console.log('!data.success')
+    showPopup(data.message || 'Error', 'error')
+    if(data.redirectUrl) window.location.href = data.redirectUrl
+    return
+  }
+
+   if(paymentMethod === 'cashOnDelivery'){
       window.location.href = data.redirectUrl
-
-    }else{
-
-      showPopup(data.message || 'Error', 'error')
-
-      if(data.redirectUrl){
-
-        window.location.href = data.redirectUrl
-
-      }
-
+      return
     }
 
-  })
-  .catch((err)=>{
+    if(paymentMethod === 'razorpay'){
+      const options = {
+        key: data.key_id,
+        amount: data.amount,
+        currency: "INR",
+        order_id: data.razorpayOrderId,
+        name: "Lunexa Fashion",
+        description: "Order Payment",
+        handler: async function(response){
+          const verifyRes = await fetch('/verify_payment', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                addressId
+            })
+          })
+          const verifyData = await verifyRes.json()
+          if(verifyData.success){
+            window.location.href = verifyData.redirectUrl
+          }else{
+            showPopup(verifyData.message || 'Payment failed', 'error')
+          }
+        },
+        prefil: {
+          name: "", 
+          email: "", 
+          contact: ""
+        },
+        theme: {
+          color: "#3399cc"
+        }
+      }
 
-    window.location.href = data.redirectUrl
-  })
+      const rzp = new Razorpay(options)
+      rzp.open()
+    }
+  } catch(error){
+    console.error(error)
+    showPopup('Something went wrong. Try again.', 'error')
+  }
 
   })
 
