@@ -21,7 +21,7 @@
             </tr>
         </thead>
         <tbody>
-            <% wallet.transactions.forEach(tx => { %>
+            <% wallet.transactions.reverse().forEach(tx => { %>
                 <tr>
                     <td><%= new Date(tx.date).toLocaleDateString() %></td>
                     <td>

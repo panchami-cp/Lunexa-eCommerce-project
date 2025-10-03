@@ -91,36 +91,34 @@
                 </select>
                 <div id="category-error" class="error-message"></div>
               </div>
-
-
             </div>
 
-            <div class="row">
+           <div class="row">
+  <div class="col-md-12 mb-4">
+    <label class="form-label">Size and Quantity</label>
+    <div class="row">
+      <% for (let i = 0; i < size.length; i++) { %>
+        <div class="col-md-4 d-flex align-items-center mb-3">
+          <!-- Size checkbox and label -->
+          <div style="width: 5rem;">
+            <input type="checkbox" name="sizes" value="<%= size[i] %>" id="size-<%= size[i] %>"
+              onchange="toggleQtyInput('<%= size[i] %>')">
+            <label for="size-<%= size[i] %>" class="ms-1">
+              <%= size[i] %>
+            </label>
+          </div>
 
-              <div class="col-md-6 mb-4">
-                <label class="form-label">Size and Quantity</label>
-                <div>
-                  <% for (let i=0; i < size.length; i++) { %>
-                    <div class="d-flex align-items-center mb-2">
-                      <!-- Size checkbox -->
-                      <input type="checkbox" name="sizes" value="<%= size[i] %>" id="size-<%= size[i] %>"
-                        onchange="toggleQtyInput('<%= size[i] %>')">
+          <!-- Quantity input -->
+          <input type="number" name="quantity_<%= size[i] %>" id="quantity_<%= size[i] %>" placeholder="Qty"
+            class="form-control w-50" min="0" disabled>
+        </div>
+      <% } %>
+    </div>
+    <div id="size-error" class="error-message"></div>
+  </div>
+</div>
 
-                      <!-- Label for checkbox -->
-                      <label for="size-<%= size[i] %>" class="ms-2 me-3">
-                        <%= size[i] %>
-                      </label>
 
-                      <!-- Quantity input -->
-                      <input type="number" name="quantity_<%= size[i] %>" id="quantity_<%= size[i] %>" placeholder="Qty"
-                        class="form-control w-25" min="0" disabled>
-                    </div>
-                    <% } %>
-                </div>
-
-                <div id="size-error" class="error-message"></div>
-              </div>
-            </div>
 
             <script>
               function toggleQtyInput(size) {

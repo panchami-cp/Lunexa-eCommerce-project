@@ -666,9 +666,110 @@ const removeCoupon = async (req, res)=>{
 
 const verifyPayment = async (req, res)=>{
     try {
+
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, addressId } = req.body
+        const userId = req.session.user
+
+        const sign = razorpay_order_id + "|" + razorpay_payment_id
+        const expectedSign = crypto
+        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+        .update(sign.toString())
+        .digest("hex")
+
+        if (razorpay_signature !== expectedSign) {
+            return res.json({ success: false, message: "Payment verification failed!" })
+        }
+
+        const cart = await Cart.findOne({ userId }).populate("items.productId")
+        if (!cart || cart.items.length === 0) {
+            return res.json({ success: false, message: "Cart is empty" })
+        }
+
+        const selectedAddressDoc = await Address.findOne(
+            { "address._id": addressId },
+            { "address.$": 1 }
+        )
+        const selectedAddress = selectedAddressDoc.address[0]
+
+        let appliedCoupon = null
+        if (req.session.appliedCoupon) {
+            appliedCoupon = {
+                couponId: req.session.appliedCoupon.id,
+                discountAmount: req.session.appliedCoupon.discountAmount,
+            }
+        }
+
+        const finalAmount = appliedCoupon ? req.session.appliedCoupon.payableAmount : cart.totalCartPrice
+
+        const orderId = uuidv4()
+        const orderAddress = {
+                name: selectedAddress.name,
+                building: selectedAddress.building,
+                area: selectedAddress.area,
+                landmark: selectedAddress.landmark,
+                city: selectedAddress.city,
+                state: selectedAddress.state,
+                pincode: selectedAddress.pincode,
+                phone: selectedAddress.phone,
+                alternatePhone: selectedAddress.alternatePhone
+            }
+
+        const newOrder = new Order({
+            orderId,
+            userId,
+            items: cart.items,
+            totalMRP: cart.totalMRP,
+            totalDiscount: cart.totalDiscount,
+            couponDiscount: appliedCoupon ? appliedCoupon.discountAmount : 0,
+            finalAmount,
+            paymentMethod: "razorpay",
+            address: orderAddress,
+            coupon: appliedCoupon ? appliedCoupon.couponId : null,
+            razorpayOrderId: razorpay_order_id,
+            razorpayPaymentId: razorpay_payment_id,
+        })
+
+        await newOrder.save()
+
+        for (const item of cart.items) {
+            const product = item.productId
+            const orderedSize = item.size
+            const orderedQty = item.quantity
+
+            await Product.updateOne(
+                { _id: product._id, "sizeVariant.size": orderedSize },
+                { $inc: { "sizeVariant.$.quantity": -orderedQty, totalQuantity: -orderedQty } }
+            )
+        }
+
+        await Cart.updateOne(
+            { userId },
+            {
+                $set: {
+                items: [],
+                totalQuantity: 0,
+                totalCartPrice: 0,
+                totalMRP: 0,
+                totalDiscount: 0,
+            },
+            }
+        )
+
+        if (appliedCoupon) {
+            await User.updateOne(
+                { _id: userId },
+                { $push: { usedCoupon: { couponId: appliedCoupon.couponId } } }
+            )
+            req.session.appliedCoupon = null
+        }
+
+        req.session.orderId = orderId
+
+        return res.json({ success: true, redirectUrl: "/order_success" })
         
     } catch (error) {
-        
+        console.error("Error verifying payment:", error)
+        return res.json({ success: false, message: "Server error during payment verification" })
     }
 }
 

@@ -66,13 +66,16 @@
                    <h5 class="element-title text-uppercase">
                      <a href="index.html" class="item-anchor"><%=products[i].productName%></a>
                    </h5>
-                   <p>Price: Rs.<%=products[i].salePrice%> 
-                    <%if(products[i].offer && products[i].offer > 0){ %>
+                   <p class="mb-0">Price: Rs.<%=products[i].salePrice%> 
+                    <%if(products[i].salePrice !== products[i].regularPrice){ %>
 
                     <strike>Rs. <%=products[i].regularPrice%></strike> 
                     
                   <%}%>
                   </p>
+                  <%if(products[i].isBlocked || !products[i].category.isListed){%>
+                    <p class="text-danger">(Currently Unavailable)</p>
+                    <%}%> 
                    <!-- add to cart -->
                    <div class="btn-left">
                      <!-- <a href="#" class="btn-link fs-6 text-uppercase item-anchor text-decoration-none add-to-cart-link" data-product-id="<%= products[i]._id%>">ADD TO CART</a> -->
@@ -106,7 +109,11 @@
    <section id="new-arrival" class="new-arrival product-carousel py-5 position-relative overflow-hidden">
      <div class="container">
        <div class="d-flex flex-wrap justify-content-between align-items-center mt-5 mb-3">
-         <h4 class="text-uppercase"><%=categories[i].categoryName%></h4>
+         <h4 class="text-uppercase"><%=categories[i].categoryName%>
+        <%if(!categories[i].isListed){%>
+          <span class="text-danger">(Currently Unavailable)</span>
+          <%}%>
+        </h4>
          <a href="index.html" class="btn-link">View All Products</a>
        </div>
        <div class="swiper product-swiper open-up" data-aos="zoom-out">
@@ -136,11 +143,13 @@
                    <!-- add to cart -->
                    <!-- <a href="#" class="text-decoration-none add-to-cart-link" data-after="Add to cart" data-product-id="<%= categories[i].productsByCategory[j]._id %>"></a> -->
                     <span>Price: Rs.<%=categories[i].productsByCategory[j].salePrice%> 
-                      <%if(categories[i].productsByCategory[j].offer && categories[i].productsByCategory[j].offer > 0){%>
+                      <%if(categories[i].productsByCategory[j].salePrice !== categories[i].productsByCategory[j].regularPrice){%>
                       <strike>Rs. <%=categories[i].productsByCategory[j].regularPrice%></strike> 
                     <%}%>
                     </span>
-                  
+                  <%if(!categories[i].isListed || categories[i].productsByCategory[j].isBlocked){%>
+                    <p class="text-danger">(Currently Unavailable)</p>
+                    <%}%>
                  </div>
                </div>
              </div>

@@ -78,10 +78,10 @@
           
           <div class="rating">★★★★☆ (124 reviews)</div>
           
-          <p class="price text-dark">Rs.<%=product.salePrice%>
-            <%if(product.offer && product.offer > 0){%>
+          <p class="price text-dark">Rs.<%=product.salePrice%> 
+            <%if(product.salePrice !== product.regularPrice){%>
             <strike class="text-secondary">Rs<%=product.regularPrice%></strike>
-            <span class="offer"><%=product.offer%>% off</span>
+            <span class="offer"><%=product.offer >= category.offer ? product.offer : category.offer%>% off</span>
               <%}%>
               </p>
 

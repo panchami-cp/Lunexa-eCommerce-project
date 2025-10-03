@@ -120,7 +120,10 @@ const changeStatus = async (req, res)=>{
 
         const orderObjId = req.body.id
         const status = req.body.status
+        const deliveryDate = req.body.deliveryDate
         const itemId = req.body.itemId
+
+        console.log(deliveryDate)
 
     const order = await Order.findById(orderObjId)
 
@@ -136,7 +139,7 @@ const changeStatus = async (req, res)=>{
 
     }
 
-    await Order.updateOne({"items._id": itemId}, {$set:{"items.$.orderStatus": status}})
+    await Order.updateOne({"items._id": itemId}, {$set:{"items.$.orderStatus": status, "items.$.deliveryDate": deliveryDate}})
 
     res.json({success: true})
         

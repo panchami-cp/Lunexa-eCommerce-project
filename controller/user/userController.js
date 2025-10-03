@@ -12,7 +12,7 @@ const { redirect } = require('express/lib/response')
 
 
 const  loadHomePage = async (req,res)=>{
-
+    
    try {
 
         const userId = req.session.user 
@@ -23,9 +23,7 @@ const  loadHomePage = async (req,res)=>{
 
         const totalWishProducts = wishlist? wishlist.products.length: 0
         const totalCart = cart?cart.totalQuantity:0
-        let productData = await Product.find({
-            category: {$in: categories.map(category=>category._id)},
-        }).sort({updatedAt:-1})
+        let productData = await Product.find({}).sort({updatedAt:-1}).populate('category')
 
         productData = productData.slice(0,3)
 

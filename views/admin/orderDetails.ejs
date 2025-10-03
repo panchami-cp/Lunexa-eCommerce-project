@@ -126,7 +126,7 @@
         document.getElementById('errorMessage').style.display = 'none'
         document.getElementById('errorMessage').innerHTML = ''
 
-        if(isNaN(deliveryDate.getTime()) || deliveryDate <= today){
+        if( deliveryDate <= today){
             document.getElementById('errorMessage').style.display = 'block'
             document.getElementById('errorMessage').innerHTML = "Invalid Delivery Date"
             return

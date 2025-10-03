@@ -82,7 +82,7 @@
           <div class="delivery-item">
             <img src="/uploads/re-product-image/<%= item.productImage %>" alt="product">
             <div>
-              <div>Estimated delivery by <strong>
+              <div>Estimated delivery by<strong>
                   <%= item.deliveryDate %>
                 </strong></div>
             </div>
@@ -146,7 +146,6 @@
     </div>
   <% }) %>
 </div>
-
     </div>
   </div>
 </div>
@@ -229,7 +228,7 @@ try {
           if(verifyData.success){
             window.location.href = verifyData.redirectUrl
           }else{
-            showPopup(verifyData.message || 'Payment failed', 'error')
+            window.location.href = '/payment_failure'
           }
         },
         prefil: {

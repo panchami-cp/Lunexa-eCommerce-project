@@ -91,37 +91,37 @@
 
             <!-- Size & quantity -->
             <div class="row">
-              <div class="col-md-6 mb-4">
+              <div class="col-md-12 mb-4">
                 <label class="form-label">Size and Quantity</label>
-                <div>
+                <div class="row">
                   <% for (let i=0; i < size.length; i++) { const variant=product.sizeVariant.find(v=> v.size ===
                     size[i])
                     const isChecked = !!variant
-                    const quantity = variant? variant.quantity: ''
+                    const quantity = variant ? variant.quantity : ''
                     %>
-                    <div class="d-flex align-items-center mb-2">
+                    <!-- Each size+quantity pair in col-md-4 so 3 per row -->
+                    <div class="col-md-4 d-flex align-items-center mb-3">
+                      <div style="width: 5.5rem;">
+                      <!-- Checkbox -->
+                      <input type="checkbox" name="sizes" value="<%= size[i] %>" id="size-<%= size[i] %>" <%=isChecked
+                        ? 'checked' : '' %> >
 
-                      <input type="checkbox" name="sizes" value="<%= size[i] %>" id="size-<%= size[i] %>"
-                        <%=isChecked? 'checked' : '' %>
-                      >
-
-
+                      <!-- Label -->
                       <label for="size-<%= size[i] %>" class="ms-2 me-3">
                         <%= size[i] %>
                       </label>
-
-
-                      <input type="number" name="quantity_<%= size[i] %>" value="<%=quantity%>"
-                        id="quantity_<%= size[i] %>" placeholder="Qty" class="form-control w-25" min="0">
-
+                      </div>
+                      <!-- Quantity input -->
+                      <input type="number" name="quantity_<%= size[i] %>" value="<%= quantity %>"
+                        id="quantity_<%= size[i] %>" placeholder="Qty" class="form-control w-50" min="0">
                     </div>
                     <% } %>
                 </div>
 
                 <div id="size-error" class="error-message"></div>
               </div>
-
             </div>
+
 
             <!-- Existing Images -->
             <div class="mb-4">
@@ -141,52 +141,37 @@
             </div>
 
             <!-- Upload New Images -->
-         <div class="row g-4">
-  <% for(let i=1; i <=4; i++) { %>
-    <div class="col-md-3">
-      <div class="card shadow-sm border-0 h-100 text-center p-3">
-        <label class="form-label fw-semibold">Upload Image <%= i %></label>
-        
-        <input 
-          class="form-control mb-2" 
-          type="file" 
-          name="images" 
-          id="input<%= i %>"
-          accept="image/png, image/jpeg, image/jpg" 
-          onchange="viewImage(event, '<%= i %>')"
-        >
+            <div class="row g-4">
+              <% for(let i=1; i <=4; i++) { %>
+                <div class="col-md-3">
+                  <div class="card shadow-sm border-0 h-100 text-center p-3">
+                    <label class="form-label fw-semibold">Upload Image <%= i %></label>
 
-        <!-- Single image preview (used before + after cropping) -->
-        <img 
-          src="" 
-          alt="Preview <%= i %>" 
-          id="imgView<%= i %>" 
-          class="img-fluid rounded border mt-2"
-          style="max-height: 200px; object-fit: cover; display:none;"
-        >
+                    <input class="form-control mb-2" type="file" name="images" id="input<%= i %>"
+                      accept="image/png, image/jpeg, image/jpg" onchange="viewImage(event, '<%= i %>')">
 
-        <!-- Save button (shown only during cropping) -->
-        <button 
-          type="button" 
-          id="saveButton<%= i %>" 
-          class="btn btn-sm btn-primary mt-3 shadow-sm"
-          style="display:none;"
-        >
-          Save Crop
-        </button>
-      </div>
-    </div>
-  <% } %>
-</div>
+                    <!-- Single image preview (used before + after cropping) -->
+                    <img src="" alt="Preview <%= i %>" id="imgView<%= i %>" class="img-fluid rounded border mt-2"
+                      style="max-height: 200px; object-fit: cover; display:none;">
 
-
-                <div id="image-error" class="error-message"></div>
-
-                <!-- Submit -->
-                <div class="mt-4">
-                  <button class="btn btn-md rounded font-sm hover-up btn-primary" id="updatebtn" type="submit"
-                    onclick="validateAndSubmit()">Update</button>
+                    <!-- Save button (shown only during cropping) -->
+                    <button type="button" id="saveButton<%= i %>" class="btn btn-sm btn-primary mt-3 shadow-sm"
+                      style="display:none;">
+                      Save Crop
+                    </button>
+                  </div>
                 </div>
+                <% } %>
+            </div>
+
+
+            <div id="image-error" class="error-message"></div>
+
+            <!-- Submit -->
+            <div class="mt-4">
+              <button class="btn btn-md rounded font-sm hover-up btn-primary" id="updatebtn" type="submit"
+                onclick="validateAndSubmit()">Update</button>
+            </div>
 
           </form>
         </div>
@@ -206,9 +191,9 @@
 
     <script>
 
-// form submit
+      // form submit
 
- let deletedImageCount = 0;
+      let deletedImageCount = 0;
 
       function validateAndSubmit() {
         if (validateForm()) {
@@ -329,7 +314,7 @@
 
       }
 
-// view image
+      // view image
 
       function viewImage1(event) {
         document.getElementById('imgView1').src = URL.createObjectURL(event.target.files[0])
@@ -353,73 +338,73 @@
 
 
       function viewImage(event, index) {
-  let input = event.target;
-  let reader = new FileReader();
+        let input = event.target;
+        let reader = new FileReader();
 
-  reader.onload = function () {
-    let dataURL = reader.result;
-    let image = document.getElementById('imgView' + index);
-    image.style.display = 'block';
-    image.src = dataURL;
+        reader.onload = function () {
+          let dataURL = reader.result;
+          let image = document.getElementById('imgView' + index);
+          image.style.display = 'block';
+          image.src = dataURL;
 
-    // Initialize cropper
-    let cropper = new Cropper(image, {
-      aspectRatio: 1, // square crop
-      viewMode: 1,
-      background: false,
-      autoCropArea: 1,
-      zoomable: true
-    });
+          // Initialize cropper
+          let cropper = new Cropper(image, {
+            aspectRatio: 1, // square crop
+            viewMode: 1,
+            background: false,
+            autoCropArea: 1,
+            zoomable: true
+          });
 
-    let saveButton = document.getElementById('saveButton' + index);
-    saveButton.style.display = 'inline-block';
+          let saveButton = document.getElementById('saveButton' + index);
+          saveButton.style.display = 'inline-block';
 
-    saveButton.onclick = async function () {
-      let croppedCanvas = cropper.getCroppedCanvas({
-        width: 600,
-        height: 600
-      });
+          saveButton.onclick = async function () {
+            let croppedCanvas = cropper.getCroppedCanvas({
+              width: 600,
+              height: 600
+            });
 
-      // Show cropped image in same preview box
-      image.src = croppedCanvas.toDataURL('image/jpeg', 1.0);
+            // Show cropped image in same preview box
+            image.src = croppedCanvas.toDataURL('image/jpeg', 1.0);
 
-      // Replace original file with cropped one
-      let timestamp = new Date().getTime();
-      let fileName = `cropped-img-${timestamp}-${index}.jpg`;
+            // Replace original file with cropped one
+            let timestamp = new Date().getTime();
+            let fileName = `cropped-img-${timestamp}-${index}.jpg`;
 
-      await croppedCanvas.toBlob(blob => {
-        let inputFile = document.getElementById('input' + index);
-        let imgFile = new File([blob], fileName, { type: "image/jpeg" });
-        const fileList = new DataTransfer();
-        fileList.items.add(imgFile);
-        inputFile.files = fileList.files;
-      });
+            await croppedCanvas.toBlob(blob => {
+              let inputFile = document.getElementById('input' + index);
+              let imgFile = new File([blob], fileName, { type: "image/jpeg" });
+              const fileList = new DataTransfer();
+              fileList.items.add(imgFile);
+              inputFile.files = fileList.files;
+            });
 
-      // Hide button & destroy cropper
-      saveButton.style.display = 'none';
-      cropper.destroy();
-    };
-  };
+            // Hide button & destroy cropper
+            saveButton.style.display = 'none';
+            cropper.destroy();
+          };
+        };
 
-  reader.readAsDataURL(input.files[0]);
-}
+        reader.readAsDataURL(input.files[0]);
+      }
 
 
       // disable image field
 
-      
-
-window.addEventListener('DOMContentLoaded', () => {
-  
-  for (let i = 1; i <= 4; i++) {
-
-    document.getElementById(`input${i}`).disabled = true
-
-  }
-});
 
 
-// delete image
+      window.addEventListener('DOMContentLoaded', () => {
+
+        for (let i = 1; i <= 4; i++) {
+
+          document.getElementById(`input${i}`).disabled = true
+
+        }
+      });
+
+
+      // delete image
 
       function deleteSingleImage(imageId, productId) {
 
@@ -438,11 +423,11 @@ window.addEventListener('DOMContentLoaded', () => {
               deletedImageCount++
 
               if (deletedImageCount <= 4) {
-          const inputToEnable = document.getElementById(`input${deletedImageCount}`);
-          if (inputToEnable) {
-            inputToEnable.disabled = false;
-          }
-        }
+                const inputToEnable = document.getElementById(`input${deletedImageCount}`);
+                if (inputToEnable) {
+                  inputToEnable.disabled = false;
+                }
+              }
             }
           })
         })

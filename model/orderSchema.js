@@ -67,7 +67,7 @@ const orderSchema = new Schema({
             }
         },
         deliveryDate: {
-            type: Date
+            type: Date,
         }
 
         }],
@@ -130,6 +130,12 @@ const orderSchema = new Schema({
             type: String,
             required: false
            }
+        },
+        razorpayOrderId: {
+            type: String,
+        },
+        razorpayPaymentId:{
+            type: String
         },
         invoiceDate:{
             type: Date

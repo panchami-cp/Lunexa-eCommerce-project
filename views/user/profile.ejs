@@ -41,11 +41,12 @@
         <div class="label">Alternate Mobile</div>
         <div class="value"><%=user.alternatePhone ? user.alternatePhone : 'Not available' %></div>
       </div>
+      <%if(user.referralCode){%>
        <div class="details-row mt-3 border border-danger rounded p-2">
         <div class="label">Share your Referral Code</div>
         <div class="value"><%=user.referralCode %></div>
       </div>
-
+      <%}%>
       <!-- <button class="edit-button">EDIT</button> -->
     </div>
   </div>

@@ -25,7 +25,7 @@
       <div class="order-info">
         <div class="order-id"><strong>Order ID:</strong> <%=order.orderId%></div>
         <div class="delivery-date">
-          Delivery Date: 
+          Delivery Date: <%=new Date(item.deliveryDate).toLocaleDateString("en-GB")%>
           <br>
           <%if(item.orderStatus === 'Placed' || item.orderStatus === 'Processing' || item.orderStatus === 'Shipped' || item.orderStatus === 'Out for delivery' || item.orderStatus === 'Delivered'){%>
           <a href="/download_invoice?id=<%=order._id%>" class="btn btn-sm btn-outline-secondary">Download Invoice</a>

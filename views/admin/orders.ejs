@@ -132,7 +132,11 @@
             N/A 
             <%}%>
         </td>
-        <td>-</td>
+        <%if(item.deliveryDate){%>
+        <td><%= new Date(item.deliveryDate).toLocaleDateString("en-GB")%></td>
+        <%}else{%>
+          <td class="text-danger">No date added</td>
+          <%}%>
         <td>
            <a href="/admin/orders/view_order?id=<%= item._id %>" 
                class="btn btn-info text-white btn-action">View</a>

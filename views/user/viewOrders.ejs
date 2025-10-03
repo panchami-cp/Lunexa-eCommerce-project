@@ -52,11 +52,13 @@
                                     <% } %>
 
                       </h5>
-                      <p>Size: <%= item.size %>
-                      </p>
-                      <p>Price: ₹<%= item.price %>
-                      </p>
-                      <p>Delivery Date: </p>
+                      <p>Size: <%= item.size %></p>
+                      <p>Price: ₹<%= item.price %></p>
+                      <%if(item.deliveryDate){%>
+                      <p>Delivery Date: <%=new Date(item.deliveryDate).toLocaleDateString("en-GB")%></p>
+                      <%}else{%>
+                        <P></P>
+                        <%}%>
                     </div>
                   </div>
                   <div class="order-action">
