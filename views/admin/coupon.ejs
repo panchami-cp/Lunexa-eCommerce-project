@@ -133,33 +133,31 @@
               <form id="couponForm" method="POST" >
                 <div class="mb-3">
                   <label for="couponName" class="form-label">Coupon Name</label>
-                  <input type="text" name="couponName" placeholder="Type here" class="form-control" id="couponName"
-                    required />
+                  <input type="text" name="couponName" placeholder="Type here" class="form-control" id="couponName">
                     <div class="invalid-feedback" id="couponNameError"></div>
                 </div>
 
                  <div class="mb-3">
                   <label for="couponName" class="form-label">Coupon Code</label>
-                  <input type="text" name="couponCode" placeholder="Type here" class="form-control" id="couponCode"
-                    required />
+                  <input type="text" name="couponCode" placeholder="Type here" class="form-control" id="couponCode">
                     <div class="invalid-feedback" id="couponCodeError"></div>
                 </div>
 
                 <div class="mb-3">
                   <label for="startDate" class="form-label">Start Date</label>
-                  <input type="date" name="startDate" class="form-control" id="startDate" required />
+                  <input type="date" name="startDate" class="form-control" id="startDate">
                   <div class="invalid-feedback" id="startDateError"></div>
                 </div>
 
                 <div class="mb-3">
                   <label for="endDate" class="form-label">End Date</label>
-                  <input type="date" name="endDate" class="form-control" id="endDate" required />
+                  <input type="date" name="endDate" class="form-control" id="endDate">
                   <div class="invalid-feedback" id="endDateError"></div>
                 </div>
 
                 <div class="mb-3">
                   <label for="offerType" class="form-label">Offer Type</label>
-                  <select id="offerType" name="offerType" class="form-select" onchange="toggleOfferInput()" required>
+                  <select id="offerType" name="offerType" class="form-select" onchange="toggleOfferInput()">
                     <option value="">-- Select Offer Type --</option>
                     <option value="percentage">Percentage</option>
                     <option value="flat">Flat Price</option>
@@ -179,14 +177,14 @@
                 <div class="mb-3 d-none" id="flatField">
                   <label for="flatOffer" class="form-label">Offer Flat Price</label>
                   <input type="number"  name="flatOffer" placeholder="Enter flat discount price"
-                    class="form-control" id="flatOffer" />
+                    class="form-control" id="flatOffer" >
                     <div class="invalid-feedback" id="flatPriceError"></div>
                 </div>
 
                 <div class="mb-3">
                   <label for="minPrice" class="form-label">Minimum Price</label>
                   <input type="number" name="minPrice" placeholder="Minimum order value" class="form-control"
-                    id="minPrice" required />
+                    id="minPrice">
                     <div class="invalid-feedback" id="minPriceError"></div>
                 </div>
 
@@ -343,7 +341,7 @@ document.addEventListener("DOMContentLoaded", () => {
       document.querySelectorAll(".is-invalid").forEach(el => el.classList.remove("is-invalid"));
       document.querySelectorAll(".invalid-feedback").forEach(el => el.innerHTML = "");
 
-    const couponName =document.getElementById('couponName').value.trim()
+    const couponName = document.getElementById('couponName').value.trim()
     const couponCode = document.getElementById("couponCode").value.trim()
     const startDate = new Date(document.getElementById("startDate").value)
     const endDate = new Date(document.getElementById("endDate").value)
@@ -359,7 +357,12 @@ document.addEventListener("DOMContentLoaded", () => {
     
 
     // Coupon code validation
-    if (!codeRegex.test(couponCode)) {
+    if(!couponCode){
+      document.getElementById('couponCode').classList.add('is-invalid')
+      document.getElementById('couponCodeError').innerHTML = 'Enter a coupon code'
+      isValid = false
+    }
+    else if (!codeRegex.test(couponCode)) {
       document.getElementById('couponCode').classList.add('is-invalid')
       document.getElementById('couponCodeError').innerHTML = "Coupon code must be 3-20 characters and can only contain letters, numbers, underscores, and hyphens."
       isValid = false
@@ -367,22 +370,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
     //coupon name validation
     if(!couponName){
-       document.getElementById('couponName').classList.add('is-invalid')
+      document.getElementById('couponName').classList.add('is-invalid')
       document.getElementById('couponNameError').innerHTML = "Enter a coupon name"
       isValid = false
     }
 
     // Start date validation
-    if (isNaN(startDate.getTime()) || startDate < today) {
-      console.log(today)
-      console.log(startDate)
+    if(isNaN(startDate.getTime())){
+      document.getElementById('startDate').classList.add('is-invalid')
+      document.getElementById('startDateError').innerHTML = 'Enter a start date'
+      isValid = false
+    }
+    else if (startDate < today) {
       document.getElementById('startDate').classList.add('is-invalid')
       document.getElementById('startDateError').innerHTML = "The date cannot be the day before today"
       isValid = false
     }
 
     // End date validation
-    if (isNaN(endDate.getTime()) || endDate < startDate) {
+    if(isNaN(endDate.getTime())){
+      document.getElementById('endDate').classList.add('is-invalid')
+      document.getElementById('endDateError').innerHTML = 'Enter the end date'
+      isValid = false
+    }
+    else if (endDate < startDate) {
       document.getElementById('endDate').classList.add('is-invalid')
       document.getElementById('endDateError').innerHTML = "The end date cannot be the day before the start date"
       isValid = false
@@ -397,7 +408,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Percentage validation
     if (offerType === "percentage") {
-      if (!offerPercentage || offerPercentage <=0 || offerPercentage > 90) {
+      if(!offerPercentage){
+        document.getElementById('offerPercentage').classList.add('is-invalid')
+        document.getElementById('percentageError').innerHTML = 'Enter the percentage'
+        isValid = false
+    }
+
+      else if ( offerPercentage <=0 || offerPercentage > 90) {
         document.getElementById('offerPercentage').classList.add('is-invalid')
         document.getElementById('percentageError').innerHTML = "Percentage should be between 1% and 90%."
         isValid = false
@@ -406,12 +423,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Flat price validation
     if (offerType === "flat") {
-      if (!flatOffer || flatOffer <= 0) {
+      if(!flatOffer){
         document.getElementById('flatOffer').classList.add('is-invalid')
-        document.getElementById('flatPriceError').innerHTML = "Flat price must a positive value"
+        document.getElementById('flatPriceError').innerHTML = 'Enter the offer price'
+      }
+      else if (flatOffer <= 0) {
+        document.getElementById('flatOffer').classList.add('is-invalid')
+        document.getElementById('flatPriceError').innerHTML = "Flat price must be a positive value"
         isValid = false
       }
-      if(flatOffer > 1000){
+      else if(flatOffer > 1000){
         document.getElementById('flatOffer').classList.add('is-invalid')
         document.getElementById('flatPriceError').innerHTML = "The maximum flat price is 1000"
         isValid = false
@@ -419,7 +440,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Minimum price validation
-    if (!minPrice || minPrice <= 0) {
+    if(!minPrice){
+      document.getElementById('minPrice').classList.add('is-invalid')
+      document.getElementById('minPriceError').innerHTML = 'Enter a minimum order amount'
+      isValid = false
+    }
+    else if (minPrice <= 0) {
         document.getElementById('minPrice').classList.add('is-invalid')
         document.getElementById('minPriceError').innerHTML = "Minimum price must be greater than 0."
         isValid = false

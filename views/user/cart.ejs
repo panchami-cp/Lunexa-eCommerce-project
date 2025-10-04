@@ -175,8 +175,9 @@
       if (data.success) {
         
         document.getElementById(`qty-${cartId}`).textContent = data.newQty
+        document.getElementById('item-count').textContent = data.newQty
 
-        location.reload(); 
+        // location.reload()
       }else{
         showPopup(data.message, 'error')
       }

@@ -16,20 +16,20 @@ const  loadHomePage = async (req,res)=>{
    try {
 
         const userId = req.session.user 
-        const categories = await Category.find()
+        const categories = await Category.find({isListed: true})
         const wishlist = await Wishlist.findOne({userId: userId})
         const cart = await Cart.findOne({userId: userId})
-       
-
         const totalWishProducts = wishlist? wishlist.products.length: 0
         const totalCart = cart?cart.totalQuantity:0
-        let productData = await Product.find({}).sort({updatedAt:-1}).populate('category')
+
+        const categoryIds = categories.map((cat)=> cat._id)
+        let productData = await Product.find({isBlocked: false, category:{$in: categoryIds}}).sort({updatedAt:-1}).populate('category')
 
         productData = productData.slice(0,3)
 
     for(let i=0; i<categories.length; i++){   
 
-        let productsByCategory = await Product.find({
+        let productsByCategory = await Product.find({isBlocked: false,
             category: categories[i]._id,
         }).sort({updatedAt:-1}).limit(4)
 
@@ -397,7 +397,7 @@ const loadShopAll = async (req, res) => {
     const userData = await User.findOne({ _id: user })
     const totalCart = cart? cart.totalQuantity: 0
     const totalWishProducts = wishlist? wishlist.products.length: 0
-    const categories = await Category.find()
+    const categories = await Category.find({isListed: true})
     const categoryIds = categories.map(cat => cat._id.toString())
 
     const search = req.query.search || ""
@@ -409,6 +409,7 @@ const loadShopAll = async (req, res) => {
     // Filtering
     const filter = {
       category: { $in: categoryIds },
+      isBlocked: false
     };
 
     if (search.trim()) {

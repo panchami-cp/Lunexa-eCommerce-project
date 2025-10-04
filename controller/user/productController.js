@@ -367,25 +367,19 @@ const updateQuantity = async(req, res)=>{
   try {
 
     const { cartId, type } = req.body;
-
     const userId = req.session.user
 
     const cart = await Cart.findOne({ 'items._id': cartId }).populate('items.productId');
     
-
     if (!cart) {
       
       return res.json({ success: false, message: 'Cart not found' });
 
     }
 
- 
     const item = cart.items.id(cartId);
-
     const product = item.productId;
-  
     const selectedSize = item.size;
-    
     const stockData = product.sizeVariant.find(s => s.size === selectedSize);
     
     if (!stockData){
@@ -427,11 +421,9 @@ const updateQuantity = async(req, res)=>{
 
   cart.totalQuantity = cart.items.reduce((acc, item) => acc + item.quantity, 0)
 
-  await cart.save();
+  await cart.save()
 
-  res.json({ success: true, 
-    newQty: item.quantity
-  });
+  res.json({ success: true, newQty: item.quantity})
     
   } catch (error) {
 

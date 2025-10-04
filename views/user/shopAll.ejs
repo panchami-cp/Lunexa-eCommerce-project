@@ -59,9 +59,6 @@
               class="category-link <%= (category[i]._id.toString() === (selectedCategory ? selectedCategory.toString() : '')) ? 'active' : '' %>" 
               onclick="return applyFilter(event, 'category', '<%= category[i]._id %>', 'categoryName')">
                 <%=category[i].categoryName%>
-                 <%if(category[i].isListed === false){%>
-                  <span class="text-danger">(Currently Unavailable)</span>
-                  <%}%>
               </a>
               
             </li>
@@ -122,8 +119,6 @@
                       <strike>Rs.<%=products[i].regularPrice%></strike> 
                     <%}%>
                     </p>
-                
-
                     <!-- add to cart -->
                     <!-- <a href="#" class="text-decoration-none add-to-cart-link" data-product-id="<%= products[i]._id%>">ADD TO CART</a> -->
                   </div>

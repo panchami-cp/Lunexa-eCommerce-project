@@ -73,9 +73,6 @@
                     
                   <%}%>
                   </p>
-                  <%if(products[i].isBlocked || !products[i].category.isListed){%>
-                    <p class="text-danger">(Currently Unavailable)</p>
-                    <%}%> 
                    <!-- add to cart -->
                    <div class="btn-left">
                      <!-- <a href="#" class="btn-link fs-6 text-uppercase item-anchor text-decoration-none add-to-cart-link" data-product-id="<%= products[i]._id%>">ADD TO CART</a> -->
@@ -110,9 +107,6 @@
      <div class="container">
        <div class="d-flex flex-wrap justify-content-between align-items-center mt-5 mb-3">
          <h4 class="text-uppercase"><%=categories[i].categoryName%>
-        <%if(!categories[i].isListed){%>
-          <span class="text-danger">(Currently Unavailable)</span>
-          <%}%>
         </h4>
          <a href="index.html" class="btn-link">View All Products</a>
        </div>
@@ -147,9 +141,6 @@
                       <strike>Rs. <%=categories[i].productsByCategory[j].regularPrice%></strike> 
                     <%}%>
                     </span>
-                  <%if(!categories[i].isListed || categories[i].productsByCategory[j].isBlocked){%>
-                    <p class="text-danger">(Currently Unavailable)</p>
-                    <%}%>
                  </div>
                </div>
              </div>

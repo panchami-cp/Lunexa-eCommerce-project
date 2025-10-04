@@ -220,6 +220,13 @@ const placeOrder = async (req, res)=>{
                     { $inc: { 'sizeVariant.$.quantity': -orderedQty, totalQuantity: -orderedQty } }
                 )
 
+                const updatedProduct = await Product.findById(product._id).select('totalQuantity')
+                
+                if(updatedProduct){
+                   const status = updatedProduct.totalQuantity === 0 ? 'Out of stock' : 'In Stock'
+                   await Product.updateOne({_id: product._id}, {$set: {status: status}})
+                }
+
             }
 
              await Cart.updateOne({userId: userId},{$set:{
@@ -436,6 +443,13 @@ const cancelOrder = async(req, res)=>{
                     { _id: item.productId._id, "sizeVariant.size": item.size },
                     { $inc: { "sizeVariant.$.quantity": item.quantity, totalQuantity: item.quantity } }
                 )
+
+                const updatedProduct = await Product.findById(item.productId._id).select('totalQuantity')
+
+                if(updatedProduct){
+                    const status = updatedProduct.totalQuantity === 0 ? 'Out of stock' : 'In Stock'
+                    await Product.updateOne({_id: item.productId._id}, {$set:{status: status}})
+                }
         
             await Order.updateOne(
                 {"items._id": itemId},
