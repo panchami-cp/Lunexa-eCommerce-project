@@ -4,6 +4,8 @@ const Coupon = require('../../model/couponSchema')
 const loadCoupon = async (req, res)=>{
     try {
 
+        const isAjax = req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest'
+
         let search = req.query.search || ""
         
         let page = parseInt(req.query.page) || 1
@@ -19,13 +21,22 @@ const loadCoupon = async (req, res)=>{
         const totalCoupons = await Coupon.countDocuments()
         const totalPages = Math.ceil(totalCoupons/limit)
 
-        res.render('admin/coupon',{
+         const templateData = {
             coupons,
-            currentPage: page,
             totalPages: totalPages,
+            currentPage: page,
             totalCoupons,
             search
-        })
+        }
+
+         if(isAjax){
+            return res.render('admin/coupon', templateData, (err, html)=>{
+            if(err) return res.status(500).send('Error rendering users')
+                res.send(html)
+            })
+        }
+
+        res.render('admin/coupon', templateData)
         
     } catch (error) {
         console.error("Error in loading coupon page: ", error)

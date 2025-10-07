@@ -4,7 +4,8 @@ const { search } = require('../../routes/userRoutes')
 
 const customerInfo = async(req, res)=>{
     try {
-        
+
+        const isAjax = req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest'
         let search = req.query.search || ""
         let page = parseInt(req.query.page) || 1
         const limit = 4
@@ -47,12 +48,21 @@ const customerInfo = async(req, res)=>{
         })
         .countDocuments()
 
-        res.render('admin/customers',{
-            data:userDataWithAddresses,
+        const templateData = {
+            data: userDataWithAddresses,
             totalPages: Math.ceil(count/limit),
             currentPage: page,
             search: search
+        }
+
+        if(isAjax){
+       return res.render('admin/customers', templateData, (err, html)=>{
+            if(err) return res.status(500).send('Error rendering users')
+                res.send(html)
         })
+    }
+
+    res.render('admin/customers', templateData)
 
     } catch (error) {
         console.error("error in loding customer info: "+error)

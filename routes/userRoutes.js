@@ -81,6 +81,7 @@ router.get('/download_invoice', userAuth, orderController.downloadInvoice)
 router.post('/apply_coupon', userAuth, orderController.applyCoupon)
 router.post('/remove_coupon', userAuth, orderController.removeCoupon)
 router.post('/verify_payment', userAuth, orderController.verifyPayment)
+router.get('/payment_failure', userAuth, orderController.paymentFail)
 
 
 module.exports = router

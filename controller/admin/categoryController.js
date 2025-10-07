@@ -7,7 +7,7 @@ const fuzzy = require('fuzzy')
 const categoryInfo = async (req, res)=>{
 
     try {
-        
+        const isAjax = req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest'
         let search = req.query.search || ""
         
         let page = parseInt(req.query.page) || 1
@@ -23,14 +23,22 @@ const categoryInfo = async (req, res)=>{
         const totalCategories = await Category.countDocuments()
         const totalPages = Math.ceil(totalCategories/limit)
 
-        res.render('admin/category',{
+        const templateData = {
             cat: categoryData,
-            currentPage: page,
             totalPages: totalPages,
+            currentPage: page,
             totalCategories: totalCategories,
             search: search
+        }
 
+         if(isAjax){
+       return res.render('admin/category', templateData, (err, html)=>{
+            if(err) return res.status(500).send('Error rendering users')
+                res.send(html)
         })
+    }
+
+        res.render('admin/category',templateData)
 
     } catch (error) {
         console.error("Error in loading category: "+error)

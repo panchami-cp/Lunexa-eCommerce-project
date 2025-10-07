@@ -3,6 +3,7 @@ const Product = require('../../model/productSchema')
 const Category = require('../../model/categorySchema')
 const Wishlist = require('../../model/wishlistSchema')
 const Cart = require('../../model/cartSchema')
+const {cartTotals} = require('../../helpers/cartHelper')
 const maxProduct = 5
 
 const productDetails = async (req, res)=>{
@@ -245,15 +246,11 @@ const addToCart = async (req, res) => {
           totalRegularPrice: regularPrice
         })
       }
-
-     cart.totalQuantity = cart.items.reduce((acc, item) => acc + item.quantity, 0)
-    cart.totalCartPrice = cart.items.reduce((acc, item) => acc + item.totalPrice, 0);
-    cart.totalMRP = cart.items.reduce((acc, item) => acc + item.totalRegularPrice, 0);
-    cart.totalDiscount = cart.totalMRP - cart.totalCartPrice
-     
     }
 
-    await cart.save();
+    cartTotals(cart)
+
+    await cart.save()
 
     await Wishlist.updateOne({userId: userId},
       
@@ -289,11 +286,7 @@ const loadcart = async (req, res)=>{
       })
   }
 
-
-  cart.totalCartPrice = cart.items.reduce((acc, item)=> acc + item.totalPrice, 0)
-  cart.totalMRP = cart.items.reduce((acc, item)=> acc + item.totalRegularPrice, 0)
-  cart.totalDiscount = cart.totalMRP - cart.totalCartPrice
-  const totalQuantity = cart.items.reduce((acc, item) => acc + item.quantity, 0)
+  cartTotals(cart)
 
     const cartItems = cart.items.map(item => {
       const product = item.productId
@@ -345,9 +338,7 @@ const removeProduct = async(req,res)=>{
 
   const cart = await Cart.findOne({userId})
 
-  cart.totalCartPrice = cart.items.reduce((acc, item)=> acc + item.totalPrice,0)
-
-  cart.totalQuantity = cart.items.reduce((acc, item)=> acc + item.quantity,0)
+  cartTotals(cart)
 
   await cart.save()
 
@@ -390,7 +381,6 @@ const updateQuantity = async(req, res)=>{
 
     const maxStock = stockData.quantity;
 
-  
   if (type === 'increase') {
 
     if (item.quantity >= maxStock) {
@@ -400,7 +390,6 @@ const updateQuantity = async(req, res)=>{
     }
 
     if(item.quantity >= maxProduct){
-
 
       return res.json({success: false, message: "Reached limit"})
 
@@ -419,11 +408,18 @@ const updateQuantity = async(req, res)=>{
     item.totalRegularPrice = item.regularPrice * item.quantity
   }
 
-  cart.totalQuantity = cart.items.reduce((acc, item) => acc + item.quantity, 0)
+  cartTotals(cart)
 
   await cart.save()
 
-  res.json({ success: true, newQty: item.quantity})
+  res.json({
+    success: true, 
+    itemQuantity: item.quantity, 
+    totalQantity: cart.totalQuantity,
+    totalMrp: cart.totalMRP,
+    totalDiscount: cart.totalDiscount,
+    totalAmount: cart.totalCartPrice
+  })
     
   } catch (error) {
 

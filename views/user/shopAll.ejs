@@ -43,7 +43,7 @@
         <i class="bi bi-x-lg"></i>
       </button>
     </div>
-    <button class="btn btn-light" type="submit">Search</button>
+    <!-- <button class="btn btn-light" type="submit">Search</button> -->
   </div>
 </form>
 
@@ -95,6 +95,7 @@
     
       
       <main class="shop-products container mt-4">
+        <div id="resultsContainer">
         <div class="row">
           
           <% for (let i = 0; i < products.length; i++) { %>
@@ -126,9 +127,8 @@
               </div>
             </div>
           <% } %>
-         
         </div>
-      
+      </div>
      
       <div class="pagination d-flex justify-content-center mt-4">
         <% if (currentPage > 1) { %>
@@ -271,57 +271,82 @@
   }
   </script>
 
-  <!-- add to cart -->
+<!-- search -->
+<script>
 
-  <script>
-//   document.addEventListener('DOMContentLoaded', () => {
-//     const cartLinks = document.querySelectorAll('.add-to-cart-link')
+      document.addEventListener('DOMContentLoaded', () => {
+        const searchInput = document.getElementById('searchInput');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const searchForm = document.getElementById('searchForm');
 
-//     cartLinks.forEach(link => {
-//       link.addEventListener('click', async (e) => {
-//         e.preventDefault()
-//         const productId = link.getAttribute('data-product-id')
+        
+        if (searchForm) searchForm.addEventListener('submit', e => e.preventDefault());
 
-//         try {
-//           const res = await fetch(`/addToCart?productId=${productId}`)
-//           const data = await res.json()
+        let controller = null;
 
-//           if (data.success === false && data.redirect) {
-//             showPopup("This product is not available.", "error")
-//             setTimeout(() => {
-//               window.location.href = data.redirect
-//             }, 2000)
-//           } else {
-//             showPopup(data.message || "Added to cart", "success")
-//           }
+        searchInput.addEventListener('input', async () => {
+          const query = searchInput.value.trim();
 
-//         } catch (error) {
-//           console.error('Error:', error)
-//           showPopup("Failed to add to cart.", "error")
-//         }
-//       })
-//     })
-//   })
+          // cancel previous request
+          if (controller) controller.abort();
+          controller = new AbortController();
 
-//   function showPopup(message, type) {
-//     const popup = document.createElement('div')
-//     popup.textContent = message
-//     popup.style.position = 'fixed'
-//     popup.style.top = '20px'
-//     popup.style.left = '20px'
-//     popup.style.padding = '12px 20px'
-//     popup.style.borderRadius = '5px'
-//     popup.style.color = '#fff'
-//     popup.style.zIndex = '9999'
-//     popup.style.backgroundColor = '#000'
-//     popup.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)'
-//     document.body.appendChild(popup)
+          try {
+            const response = await fetch(`/shop_all?search=${encodeURIComponent(query)}`, {
+              headers: { 'X-Requested-With': 'XMLHttpRequest' },
+              signal: controller.signal
+            });
+            if (!response.ok) throw new Error('Network response was not ok');
 
-//     setTimeout(() => {
-//       popup.remove()
-//     }, 2000)
-//   }
-// </script>
+            const html = await response.text();
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+
+            // accept either id (old/new) or the table wrapper
+            const newResults = tempDiv.querySelector('#resultsContainer')
+              || tempDiv.querySelector('#resultContainer')
+              || tempDiv.querySelector('.table-responsive')
+              || tempDiv.querySelector('table');
+
+            if (newResults && resultsContainer) {
+              resultsContainer.innerHTML = newResults.innerHTML;
+            } else {
+              console.warn('Live search: could not find results container in response');
+            }
+          } catch (err) {
+            if (err.name === 'AbortError') return; // expected when we abort previous fetch
+            console.error('Live search error:', err);
+          }
+        });
+
+        // intercept pagination links inside results so paging is ajax too
+        resultsContainer?.addEventListener('click', async (e) => {
+          const a = e.target.closest('a');
+          if (!a) return;
+          const href = a.getAttribute('href');
+          if (href && href.startsWith('/shop_all')) {
+            e.preventDefault();
+            try {
+              const resp = await fetch(href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+              const html = await resp.text();
+              const tmp = document.createElement('div');
+              tmp.innerHTML = html;
+              const nr = tmp.querySelector('#resultsContainer') || tmp.querySelector('#resultContainer') || tmp.querySelector('.table-responsive') || tmp.querySelector('table');
+              if (nr) resultsContainer.innerHTML = nr.innerHTML;
+            } catch (err) {
+              console.error('Pagination load error:', err);
+            }
+          }
+        });
+
+        // global reset function used by your clear button
+        window.resetPage = function () {
+          const input = document.getElementById('searchInput');
+          input.value = '';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+        };
+      });
+</script>
 
     <script src="js/jquery.min.js"></script>
     <script src="js/plugins.js"></script>

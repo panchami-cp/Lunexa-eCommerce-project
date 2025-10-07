@@ -148,7 +148,6 @@
   </div>
 </div>
 
-
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
   document.getElementById('placeOrderBtn').addEventListener('click', async function(event){
@@ -192,9 +191,9 @@ try {
   const data = await res.json()
 
   if(!data.success){
-    console.log('!data.success')
-    showPopup(data.message || 'Error', 'error')
-    if(data.redirectUrl) window.location.href = data.redirectUrl
+    if(data.redirectUrl){
+      setTimeout(()=> window.location.href = data.redirectUrl, 2000)
+    } 
     return
   }
 
@@ -226,7 +225,7 @@ try {
           if(verifyData.success){
             window.location.href = verifyData.redirectUrl
           }else{
-            window.location.href = '/payment_failure'
+            window.location.href = verifyData.redirectUrl
           }
         },
         prefil: {
@@ -240,6 +239,10 @@ try {
       }
 
       const rzp = new Razorpay(options)
+      rzp.on('payment.failed', function (response){
+        console.error("payment failed: ", response.error)
+        window.location.href = '/payment_failure'
+      })
       rzp.open()
     }
   } catch(error){
@@ -309,7 +312,7 @@ document.querySelectorAll('.remove-btn').forEach((btn)=>{
     popup.style.borderRadius = '5px'
     popup.style.color = '#fff'
     popup.style.zIndex = '9999'
-    popup.style.backgroundColor = '#000'
+    popup.style.backgroundColor = type === 'error' ? '#F54927' : '#000'
     popup.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)'
     document.body.appendChild(popup)
 

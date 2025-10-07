@@ -82,9 +82,7 @@
         <!-- Right: Price Summary -->
         <div class="col-md-4">
           <div class="card p-3">
-            <h6 class="fw-bold">PRICE DETAILS (<span id="item-count">
-                <%= totalItems %>
-              </span> Items)</h6>
+            <h6 class="fw-bold">PRICE DETAILS (<span id="item-count"><%= totalItems %></span> Items)</h6>
             <hr>
             <div class="d-flex justify-content-between">
               <span>Total MRP</span>
@@ -140,6 +138,14 @@
       </div>
     </div>
   </div>
+<!-- error message -->
+ <%if(error && error.length > 0){%>
+  <script>
+    document.addEventListener('DOMContentLoaded', ()=>{
+      showPopup('<%=error[0]%>', 'error')
+    })
+  </script>
+  <%}%>
 
 
   <script>
@@ -174,10 +180,12 @@
 
       if (data.success) {
         
-        document.getElementById(`qty-${cartId}`).textContent = data.newQty
-        document.getElementById('item-count').textContent = data.newQty
-
-        // location.reload()
+        document.getElementById(`qty-${cartId}`).textContent = data.itemQuantity
+        document.getElementById('item-count').textContent = data.totalQantity
+        document.getElementById('total-mrp').textContent = data.totalMrp
+        document.getElementById('total-discount').textContent = data.totalDiscount
+        document.getElementById('final-amount').textContent = data.totalAmount
+        
       }else{
         showPopup(data.message, 'error')
       }
@@ -202,7 +210,7 @@
 
     setTimeout(() => {
       popup.remove()
-    }, 2000)
+    }, 3000)
   }
  
 </script>

@@ -11,6 +11,7 @@ const sharp = require('sharp')
 const allProducts = async (req, res)=>{
     try {
         
+        const isAjax = req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest'
         const search = req.query.search || ""
         const searchTerm = String(search || "").trim()
         let page = parseInt(req.query.page) || 1
@@ -47,14 +48,24 @@ const allProducts = async (req, res)=>{
         
         const category = await Category.find({isListed:true})
 
+         const templateData = {
+            data: productData,
+            totalPages: Math.ceil(count/limit),
+            currentPage: page,
+            cat: category,
+            search: search
+        }
+
         if(category){
-            res.render('admin/products',{
-                data:productData,
-                currentPage: page,
-                totalPages: Math.ceil(count/limit),
-                cat: category,
-                search:  search
-            })
+
+            if(isAjax){
+                return res.render('admin/products', templateData, (err, html)=>{
+                    if(err) return res.status(500).send('Error rendering users')
+                    res.send(html)
+                })
+            }
+            res.render('admin/products',templateData)
+            
         }else{
             res.send('page not found')
         }

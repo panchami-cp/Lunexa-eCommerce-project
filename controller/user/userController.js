@@ -390,6 +390,7 @@ const login = async (req,res)=>{
 
 const loadShopAll = async (req, res) => {
   try {
+    const isAjax = req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest'
     const user = req.session.user
     const cart = await Cart.findOne({userId: user})
     const wishlist = await Wishlist.findOne({userId: user})
@@ -454,20 +455,29 @@ const loadShopAll = async (req, res) => {
     const categoriesWithIds = categories.map(c => ({
       _id: c._id,
       categoryName: c.categoryName,
-    }));
+    }))
 
-    res.render("user/shopAll", {
-      user: userData,
-      products,
-      category: categoriesWithIds,
-      totalProducts,
-      currentPage: page,
-      totalPages,
-      search,
-      totalCart,
-      totalWishProducts,
-      selectedCategory
-    });
+    const templateData = {
+            user: userData,
+            products,
+            category: categoriesWithIds,
+            totalProducts,
+            totalPages,
+            currentPage: page,
+            search,
+            totalCart,
+            totalWishProducts,
+            selectedCategory
+        }
+
+        if(isAjax){
+            return res.render('user/shopAll', templateData, (err, html)=>{
+            if(err) return res.status(500).send('Error rendering users')
+                res.send(html)
+            })
+        }
+
+    res.render("user/shopAll", templateData)
 
   } catch (error) {
     console.error("Error in loading shop all page: ", error);

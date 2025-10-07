@@ -29,8 +29,9 @@ app.use(session({
 app.use(flash())
 
 app.use((req, res, next) => {
-    res.locals.message = req.flash('error');
-    next();
+  res.locals.error = req.flash('error')
+  res.locals.success = req.flash('success')
+  next()
 })
 
 
@@ -38,8 +39,8 @@ app.use(passport.initialize())
 app.use(passport.session())
 
 app.use((req, res, next) => {
-  res.locals.user = req.user || null;
-  next();
+  res.locals.user = req.user || null
+  next()
 })
 
 

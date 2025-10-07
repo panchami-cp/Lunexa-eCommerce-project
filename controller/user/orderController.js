@@ -165,7 +165,8 @@ const placeOrder = async (req, res)=>{
     }
 
     if(stockIssue){
-        return res.json({success: false, redirectUrl: '/cart', message: "The product(s) were out of stock or insufficient. Your cart has been updated."})
+        req.flash('error', 'The product(s) were out of stock or insufficient. Your cart has been updated.')
+        return res.json({success: false, redirectUrl: '/cart'})
     }
 
     //apply coupon
@@ -691,7 +692,7 @@ const verifyPayment = async (req, res)=>{
         .digest("hex")
 
         if (razorpay_signature !== expectedSign) {
-            return res.json({ success: false, message: "Payment verification failed!" })
+            return res.json({ success: false, redirectUrl: '/payment_failure' })
         }
 
         const cart = await Cart.findOne({ userId }).populate("items.productId")
@@ -783,7 +784,16 @@ const verifyPayment = async (req, res)=>{
         
     } catch (error) {
         console.error("Error verifying payment:", error)
-        return res.json({ success: false, message: "Server error during payment verification" })
+        return res.json({ success: false, redirectUrl: '/payment_failure' })
+    }
+}
+
+const paymentFail = async (req, res)=>{
+    try {
+        
+        res.render('user/paymentFail')
+    } catch (error) {
+        
     }
 }
 
@@ -801,5 +811,6 @@ module.exports = {
     downloadInvoice,
     applyCoupon,
     removeCoupon,
-    verifyPayment
+    verifyPayment,
+    paymentFail
 }
