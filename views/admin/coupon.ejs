@@ -215,8 +215,8 @@
                     <%coupons.forEach((coupon, index)=>{%>
                     <tr>
                       <td><%= index + 1%></td>
-                      <td><%= coupon.name%></td>
-                      <td class="text-capitalize"><%= coupon.code %></td>
+                      <td class="text-capitalize"><%= coupon.name%></td>
+                      <td><%= coupon.code %></td>
                       <td><%= new Date(coupon.startDate).toLocaleDateString("en-GB")%></td>
                       <td><%= new Date(coupon.endDate).toLocaleDateString("en-GB")%></td>
                       <td class="text-capitalize"><%= coupon.offerType %></td>
@@ -347,8 +347,13 @@ document.addEventListener("DOMContentLoaded", () => {
     today.setHours(0,0,0,0) // remove time part for comparison
 
     const codeRegex = /^[A-Za-z0-9_-]{3,20}$/
-    
 
+    //coupon name validation
+       if(!couponName){
+      document.getElementById('couponName').classList.add('is-invalid')
+      document.getElementById('couponNameError').innerHTML = "Enter a coupon name"
+      isValid = false
+    }
     // Coupon code validation
     if(!couponCode){
       document.getElementById('couponCode').classList.add('is-invalid')
@@ -358,13 +363,6 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (!codeRegex.test(couponCode)) {
       document.getElementById('couponCode').classList.add('is-invalid')
       document.getElementById('couponCodeError').innerHTML = "Coupon code must be 3-20 characters and can only contain letters, numbers, underscores, and hyphens."
-      isValid = false
-    }
-
-    //coupon name validation
-    if(!couponName){
-      document.getElementById('couponName').classList.add('is-invalid')
-      document.getElementById('couponNameError').innerHTML = "Enter a coupon name"
       isValid = false
     }
 
@@ -445,7 +443,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Minimum price > flat offer validation
-    if (offerType === "flat" && parseFloat(minPrice) <= parseFloat(flatOffer)) {
+    else if (offerType === "flat" && parseFloat(minPrice) <= parseFloat(flatOffer)) {
         document.getElementById('minPrice').classList.add('is-invalid')
         document.getElementById('minPriceError').innerHTML = "Minimum price must be greater than flat offer price."
         isValid = false

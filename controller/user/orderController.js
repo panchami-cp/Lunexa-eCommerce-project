@@ -12,35 +12,35 @@ const crypto = require('crypto')
 const env = require('dotenv').config()
 const { v4: uuidv4 } = require('uuid')
 const { redirect } = require('express/lib/response')
+const Wallet = require('../../model/walletSchema')
 
 
 const loadCheckout = async(req,res)=>{
 
     try {
 
-        const userid = req.session.user
+        const userId = req.session.user
 
-        const userData = await User.findById(userid)
+        const userData = await User.findById(userId)
 
         if(!userData){
             
             return res.redirect('/pageNotFound')
         }
-        
-        const coupons = await Coupon.find().sort({endDate:1})
+
+        const usedCouponIds = (userData.usedCoupon || []).map(c => c.couponId).filter(id => id !== null && id !== undefined)
 
         let today = new Date()
-        today.setHours(0,0,0,0)
+        
+        const currentCoupons = await Coupon.find({
+            _id: {$nin:usedCouponIds},
+            startDate: {$lte: today},
+            endDate: {$gte: today}
+        }).sort({endDate:1})
 
-        let currentCoupons = coupons.filter((coupon)=>{
-            let endDate = new Date(coupon.endDate)
-            endDate.setHours(0,0,0,0)
-            return endDate >= today
-        })
+        const cart = await Cart.findOne({userId: userId}).populate('items.productId')
 
-        const cart = await Cart.findOne({userId: userid}).populate('items.productId')
-
-        const findAddress = await Address.findOne({userId: userid})
+        const findAddress = await Address.findOne({userId: userId})
         let addresses
 
         if(findAddress){
@@ -62,7 +62,7 @@ const loadCheckout = async(req,res)=>{
             couponDiscount = req.session.applicableCoupon?.discountAmount || 0
         }
 
-        let applicableCoupon = coupons.filter((coupon)=>{
+        let applicableCoupon = currentCoupons.filter((coupon)=>{
            return  Number(cart.totalCartPrice) >= Number(coupon.minimumPrice)
         })
 
@@ -248,6 +248,15 @@ const placeOrder = async (req, res)=>{
             req.session.orderId = orderId
 
             return res.json({success: true, redirectUrl: '/order_success'})
+        }
+
+        //wallet
+        const wallet = await Wallet.findOne({userId})
+        
+        if(paymentMethod === 'wallet'){
+            if(!wallet || wallet.balance < finalAmount){
+                return res.json({success: false, message: 'Cannot find wallet or insufficient balance in wallet'})
+            }
         }
 
         // razorpay
