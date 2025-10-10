@@ -2,6 +2,7 @@
 
   <head>
     <link rel="stylesheet" href="/css/user/orders.css">
+    <link rel="stylesheet" href="/css/user/orderCancelPage.css">
   </head>
 
   <div class="container-fluid">
@@ -22,12 +23,8 @@
 
     <% orders.forEach(order=> { %>
       <div class="orders-container">
-
-        <div class="order-box">
-          <!-- Order ID -->
-          <div class="order-id">Order ID: <%= order.orderId %>
-          </div>
-
+        <div class="order-box position-relative">
+          <div class="order-id">Order ID: <%= order.orderId %></div>
           <div class="order-content">
             <!-- Left: Product Info (vertical list) -->
             <div class="products-list " style="width: 100%;">
@@ -68,11 +65,80 @@
                 <% }) %>
             </div>
           </div>
+          <%if(order.items.every((item)=> item.orderStatus === 'Placed')){%>
+          <a href="#" 
+          class="btn btn-outline-danger position-absolute top-0 end-0 m-2" 
+          id="cancelAllButton" 
+          data-id="<%=order._id%>">Cancel all</a>
+          <%}%>
+          <%if(order.items.every(item=> item.orderStatus === 'Delivered')){%>
+            <a href="#" 
+          class="btn btn-outline-warning position-absolute top-0 end-0 m-2" 
+          id="returnAllButton" 
+          data-id="<%=order._id%>">Return All</a>
+          <%}%>
         </div>
 
       </div>
       <% }) %>
   </div>
+
+  <!-- cancel all confirm modal -->
+
+<div id="cancelAllConfirmModal" class="modal">
+    <div class="modal-content">
+        <p>Are you sure you want to cancel all the products?</p>
+        <div class="modal-actions">
+            <button type="button" id="confirmYes">Yes</button>
+            <button type="button" id="confirmNo">No</button>
+        </div>
+    </div>
+</div>
+
+<script>
+  //cancel all
+let orderId = null
+
+  document.getElementById("cancelAllButton").addEventListener("click", function(event) {
+    event.preventDefault()
+
+    orderId = this.dataset.id
+
+    document.getElementById("cancelAllConfirmModal").style.display = "flex"
+})
+
+document.getElementById("confirmYes").addEventListener("click", async function() {
+
+if (!orderId) return
+
+    try {
+        const res = await fetch('/cancel_all', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({id: orderId})
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+            window.location.href = '/orders'
+           
+        } else {
+            window.location.href = data.redirectUrl;
+        }
+    } catch (err) {
+        console.error("Error cancelling order:", err);
+        window.location.href = '/orders'
+    }
+
+    document.getElementById("cancelAllConfirmModal").style.display = "none";
+})
+document.getElementById('confirmNo').addEventListener('click', function(){
+  document.getElementById('cancelAllConfirmModal').style.display = 'none'
+})
+</script>
 
   <!-- Footer -->
   <%- include("../partials/user/footer") %>

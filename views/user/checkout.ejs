@@ -255,7 +255,9 @@ try {
   if(!data.success){
     if(data.redirectUrl){
       setTimeout(()=> window.location.href = data.redirectUrl, 2000)
-    } 
+    } else{
+      showPopup(data.message, 'error')
+    }
     return
   }
 
@@ -382,7 +384,7 @@ document.querySelectorAll('.remove-btn').forEach((btn)=>{
 
     setTimeout(() => {
       popup.remove()
-    }, 2000)
+    }, 4000)
   }
 
 </script>
