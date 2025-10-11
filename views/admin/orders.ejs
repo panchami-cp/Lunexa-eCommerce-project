@@ -100,13 +100,12 @@
    <tbody>
   <% for (let i = 0; i < orderData.length; i++) { %>
     <% const order = orderData[i]; %>
-    
-    <!-- Loop through each product in this order -->
+
     <% for (let j = 0; j < order.items.length; j++) { %>
       <% const item = order.items[j]; %>
       <tr>
         <% if (j === 0) { %>
-          <!-- Show orderId only once per order (rowspan for multiple products) -->
+          <!-- Common order info -->
           <td rowspan="<%= order.items.length %>"><%= order.orderId %></td>
           <td rowspan="<%= order.items.length %>"><%= order.userId.fullname %></td>
           <td rowspan="<%= order.items.length %>"><%= new Date(order.createdOn).toLocaleDateString("en-GB") %></td>
@@ -116,36 +115,38 @@
         <!-- Product details -->
         <td>
           <div style="width: 4rem;">
-            <img src="/uploads/re-product-image/<%=item.productId.productImage[0]%>" alt="<%= item.productId.productName %>">
+            <img src="/uploads/re-product-image/<%= item.productId.productImage[0] %>" alt="<%= item.productId.productName %>">
           </div>
         </td>
-        <td><%=item.totalPrice%></td>
-
-        <!-- Product status -->
+        <td><%= item.totalPrice %></td>
         <td class="text-capitalize"><%= item.orderStatus %></td>
 
-        <!-- Return request (if per-product returnRequest) -->
+        <!-- Return Request -->
         <td class="text-capitalize">
-          <%if(item.returnRequest && item.returnRequest.status){%>
-          <%= item.returnRequest.status %>
-          <%}else{%>
-            N/A 
-            <%}%>
+          <% if (item.returnRequest && item.returnRequest.status) { %>
+            <%= item.returnRequest.status %>
+          <% } else { %>
+            N/A
+          <% } %>
         </td>
-        <%if(item.deliveryDate){%>
-        <td><%= new Date(item.deliveryDate).toLocaleDateString("en-GB")%></td>
-        <%}else{%>
+
+        <!-- Delivery Date -->
+        <% if (item.deliveryDate) { %>
+          <td><%= new Date(item.deliveryDate).toLocaleDateString("en-GB") %></td>
+        <% } else { %>
           <td class="text-danger">No date added</td>
-          <%}%>
-        <td>
-           <a href="/admin/orders/view_order?id=<%= item._id %>" 
+        <% } %>
+
+        <% if (j === 0) { %>
+          <td rowspan="<%= order.items.length %>" class="align-middle text-center">
+            <a href="/admin/orders/view_order?id=<%= order._id %>" 
                class="btn btn-info text-white btn-action">View</a>
-        </td>
+          </td>
+        <% } %>
       </tr>
     <% } %>
   <% } %>
 </tbody>
-
   </table>
 </div>
 

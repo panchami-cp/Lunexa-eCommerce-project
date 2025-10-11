@@ -939,6 +939,30 @@ const cancelAllOrder = async (req, res)=>{
     }
 }
 
+const returnAllOrder = async (req, res)=>{
+    try {
+
+        const orderId = req.body.id
+        const reason = req.body.reason
+
+        const order = await Order.findById(orderId)
+
+        if(!order){
+            return res.json({success: false, redirectUrl: '/pageNotFound'})
+        }
+
+        await Order.updateOne({_id: orderId},
+            {$set: {'items.$[].returnRequest.status': 'Pending', 'items.$[].returnRequest.reason': reason}}
+        )
+
+        res.json({success: true, redirectUrl: '/order'})
+        
+    } catch (error) {
+        console.error('Error in return all products: ',error)
+        res.json({success: false, redirectUrl: '/pageNotFound'})   
+    }
+}
+
 
 module.exports = {
     loadCheckout,
@@ -955,5 +979,6 @@ module.exports = {
     removeCoupon,
     verifyPayment,
     paymentFail,
-    cancelAllOrder
+    cancelAllOrder,
+    returnAllOrder
 }

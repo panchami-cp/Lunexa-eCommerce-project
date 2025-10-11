@@ -83,6 +83,7 @@ router.post('/remove_coupon', userAuth, orderController.removeCoupon)
 router.post('/verify_payment', userAuth, orderController.verifyPayment)
 router.get('/payment_failure', userAuth, orderController.paymentFail)
 router.post('/cancel_all', userAuth, orderController.cancelAllOrder)
+router.post('/return_all', userAuth, orderController.returnAllOrder)
 
 
 module.exports = router

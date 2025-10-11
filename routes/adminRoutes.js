@@ -54,9 +54,9 @@ router.post('/return/approve', adminAuth, orderController.approveReturn)
 router.post('/return/reject', adminAuth, orderController.rejectReturn)
 router.get('/return/refund', adminAuth, orderController.refundPage)
 router.post('/return/refund', adminAuth, orderController.refund)
+router.get('/approve_all', adminAuth, orderController.approveAllReturn)
 
 //coupon controller
-
 router.get('/coupon', adminAuth, couponController.loadCoupon)
 router.post('/add_coupon', adminAuth, couponController.addCoupon)
 router.get('/delete_coupon', adminAuth, couponController.deleteCoupon)

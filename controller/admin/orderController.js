@@ -76,9 +76,9 @@ const viewOrder = async (req, res)=>{
     try {
 
 
-        const itemId = req.query.id
+        const orderId = req.query.id
 
-        const orderData = await Order.findOne({"items._id":itemId}).populate('items.productId').populate('userId')
+        const orderData = await Order.findById(orderId).populate('items.productId').populate('userId')
 
         const orderEnum = Order.schema.path('items').schema.path('orderStatus').enumValues
 
@@ -89,16 +89,17 @@ const viewOrder = async (req, res)=>{
         if(!orderData){
             return res.redirect('/pageNotFound')
         }
-        const item = orderData.items.find(item=> item._id.toString() === itemId.toString())
 
-        if(!item){
-            return res.redirect('/pageNotFound')
-        }
+        // const item = orderData.items.find(item=> item._id.toString() === itemId.toString())
+
+        // if(!item){
+        //     return res.redirect('/pageNotFound')
+        // }
 
         res.render('admin/orderDetails',{
 
             orderData: orderData,
-            item,
+            // item,
             orderStatus,
             address: orderData.address
         })        
@@ -244,14 +245,39 @@ const refundPage = async (req, res)=>{
             return res.redirect('/pageNotFound')
         }
 
-        const item = order.items.find(item=> item._id.toString() === refundItemId.toString())
 
-        let refundAmount = item.totalPrice
+        let refundAmount = 0
+        let item = null
+        let isFullRefund = false
+
+        //partial refund
+        if(refundItemId){
+            item = order.items.find(item=> item._id.toString() === refundItemId.toString())
+
+            if(!item){
+                return res.redirect('/pageNotFound')
+            }    
+                refundAmount = item.totalPrice
+
+                if(order.couponDiscount > 0){
+                    const totalSalePrice = order.totalMRP - order.totalDiscount
+                    const couponShare = (item.totalPrice/totalSalePrice) * order.couponDiscount
+                    refundAmount = item.totalPrice - couponShare
+                }
+                refundAmount = Math.round(refundAmount)
+            
+            //full refund
+        }else{
+            isFullRefund = true
+            
+            refundAmount = order.finalAmount
+        }
 
         res.render('admin/refundPage',{
             order,
             item,
-            refundAmount
+            refundAmount,
+            isFullRefund
         })
         
     } catch (error) {
@@ -276,8 +302,6 @@ const refund = async (req, res)=>{
             return res.redirect('/pageNotFound')
         }
 
-        const item = order.items.find(item=> item._id.toString() === itemId.toString())
-
         if (method !== 'wallet') {
             return res.status(400).send('Invalid refund method')
         }
@@ -293,18 +317,31 @@ const refund = async (req, res)=>{
             });
         }
 
-        const refundAmount = parseFloat(amount);
-        wallet.balance += refundAmount;
+        const refundAmount = parseFloat(amount)
+        wallet.balance += refundAmount
 
         wallet.transactions.push({
             type: 'credit',
             amount: refundAmount
         })
 
+        
+        if(itemId){
+            const item = order.items.find(item=> item._id.toString() === itemId.toString())
+            if(!item){
+                return res.redirect('/pageNotFound')
+            }
+            item.returnRequest.status = 'Refunded'
+        }else{
+            order.items.forEach(item=>{
+                if(item.returnRequest && item.returnRequest.status !== 'Refunded'){
+                    item.returnRequest.status = 'Refunded'
+                }
+            })
+        }
+
+        
         await wallet.save();
-
-        item.returnRequest.status = 'Refunded'
-
         await order.save();
 
         res.redirect('/admin/orders');
@@ -312,6 +349,44 @@ const refund = async (req, res)=>{
     } catch (error) {
         console.error(error);
         res.redirect('/pageNotFound');
+    }
+}
+
+const approveAllReturn = async (req, res)=>{
+    try {
+
+        const orderId = req.query.id
+    
+        const order = await Order.findById(orderId)
+
+        if (!order) {
+            return res.redirect('/pageNotFound')
+        }
+
+        const allEligible = order.items.every(item => {
+            return (
+                item.returnRequest &&
+                item.returnRequest.status === 'Pending' &&
+                item.orderStatus === 'Delivered'
+            )
+        })
+
+        if(!allEligible){
+            res.redirect('/pageNotFound')
+        }
+
+        await Order.updateOne({_id: orderId},
+            {$set: {
+                "items.$[].returnRequest.status": 'Approved',
+                "items.$[].orderStatus": 'Returned'
+            }}
+        )
+
+        return res.redirect(`/admin/return/refund?id=${order._id}`)
+
+    } catch (error) {
+        console.error('Error in approve all return requests: ',error)
+        res.redirect('/pageNotFound')
     }
 }
 
@@ -323,5 +398,6 @@ module.exports = {
     approveReturn,
     rejectReturn,
     refundPage,
-    refund
+    refund,
+    approveAllReturn
 }

@@ -1,158 +1,205 @@
 <%- include("../../views/partials/admin/header") %>
 
-<head>
-    <link rel="stylesheet" href="/css/admin/orderDetails.css">
-</head>
+    <head>
+        <link rel="stylesheet" href="/css/admin/orderDetails.css">
+    </head>
 
-<div class="order-details-container">
+    <div class="order-details-container">
 
-    <!-- Return request (only for this single item) -->
+        <!-- Order Summary -->
+        <div class="box shadow-sm p-3 mb-5 bg-body rounded">
+            <h3>Order Summary</h3>
+            <div class="detail-row">
+                <span class="label">Order ID:</span>
+                <span class="value">
+                    <%= orderData.orderId %>
+                </span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Total Amount:</span>
+                <span class="value">₹<%=orderData.finalAmount%></span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Payment Method:</span>
+                <span class="value">
+                    <%=orderData.paymentMethod%>
+                </span>
+            </div>
+            <div id="errorMessage" class="fw-light text-danger"></div>
+        </div>
+
+       <% orderData.items.forEach((item) => { %>
+  <!-- Product Details Block -->
+  <div class="d-flex flex-wrap mb-1 gap-3" style="width: 100%;">
+    <div class="box shadow-sm p-3 bg-body rounded flex-grow-1 <% if (!item.returnRequest || !item.returnRequest.status) { %>w-100<% } else { %>flex-fill<% } %>">
+      <h3 class="mb-3">Product Details</h3>
+      <div class="d-flex flex-wrap align-items-start gap-3">
+        
+        <!-- Product Image -->
+        <div style="width: 6rem;">
+          <img src="/uploads/re-product-image/<%= item.productId.productImage[0] %>" 
+               alt="<%= item.productId.productName %>" 
+               class="img-fluid rounded">
+        </div>
+
+        <!-- Product Info -->
+        <div class="flex-grow-1">
+          <p><strong>Name:</strong> <%= item.productId.productName %></p>
+          <p><strong>Size:</strong> <%= item.size %></p>
+          <p><strong>Quantity:</strong> <%= item.quantity %></p>
+          <p><strong>Price:</strong> ₹ <%= item.price %></p>
+        </div>
+
+        <!-- Status Update Form -->
+       <div style="min-width: 200px;">
+  <form class="status-form d-flex flex-column gap-2">
+    <input type="hidden" name="id" class="orderId" value="<%= orderData._id %>">
+    <input type="hidden" name="itemId" class="itemId" value="<%= item._id %>">
+
+    <label><strong>Delivery Date:</strong></label>
+    <input type="date" class="form-control form-control-sm deliveryDate">
+
+    <label><strong>Status:</strong></label>
+    <select name="orderStatus" class="form-select form-select-sm orderStatus">
+      <% orderStatus.forEach((status) => { %>
+        <option value="<%= status %>" <%= status === item.orderStatus ? 'selected' : '' %>><%= status %></option>
+      <% }) %>
+    </select>
+
+    <button type="submit" class="btn btn-secondary btn-sm mt-2">Update</button>
+  </form>
+</div>
+      </div>
+    </div>
+
+    <!-- Return Request Block -->
     <% if (item.returnRequest && item.returnRequest.status) { %>
-    <div class="box shadow-sm p-3 mb-5 bg-body rounded">
-        <h3>Return Request</h3>
+      <div class="box shadow-sm p-3 bg-body rounded" style="min-width: 250px; max-width: 300px; flex-shrink: 0;">
+        <h3 class="mb-3">Return Request</h3>
 
-        <div class="detail-row">
-            <span class="label">Status:</span>
-            <span class="value <%= item.returnRequest.status %>">
-                <%= item.returnRequest.status %>
-            </span>
+        <div class="mb-2">
+          <span class="fw-bold">Status:</span>
+          <span class="value <%= item.returnRequest.status %>"><%= item.returnRequest.status %></span>
         </div>
 
         <% if (item.returnRequest.reason) { %>
-        <div class="detail-row">
-            <span class="label">Reason:</span>
+          <div class="mb-2">
+            <span class="fw-bold">Reason:</span>
             <span class="value"><%= item.returnRequest.reason %></span>
-        </div>
+          </div>
         <% } %>
 
         <% if (item.returnRequest.status === 'Pending') { %>
-            <form action="/admin/return/approve?id=<%=orderData._id%>&itemId=<%= item._id %>" method="post" style="display:inline;">
-                <button class="btn btn-success">Approve</button>
+          <div class="d-flex gap-2">
+            <form action="/admin/return/approve?id=<%= orderData._id %>&itemId=<%= item._id %>" method="post" class="flex-fill">
+              <button class="btn btn-success btn-sm w-100">Approve</button>
             </form>
-            <form action="/admin/return/reject?id=<%=orderData._id%>&itemId=<%= item._id %>" method="post" style="display:inline;">
-                <button class="btn btn-danger">Reject</button>
+            <form action="/admin/return/reject?id=<%= orderData._id %>&itemId=<%= item._id %>" method="post" class="flex-fill">
+              <button class="btn btn-danger btn-sm w-100">Reject</button>
             </form>
+          </div>
         <% } %>
-    </div>
+
+        <% if (item.returnRequest.status === 'Approved') { %>
+          <a href="/admin/return/refund?id=<%= orderData._id %>&itemId=<%= item._id %>" class="btn btn-success btn-sm mt-2 w-100">Refund</a>
+        <% } %>
+      </div>
     <% } %>
 
-
-    <!-- Order Summary -->
-    <div class="box shadow-sm p-3 mb-5 bg-body rounded">
-        <h3>Order Summary</h3>
-        <div class="detail-row">
-            <span class="label">Order ID:</span>
-            <span class="value"><%= orderData.orderId %></span>
-        </div>
-        <div class="detail-row">
-            <span class="label">Total Amount:</span>
-            <span class="value">₹<%=orderData.finalAmount%></span>
-        </div>
-        <div class="detail-row">
-            <span class="label">Payment Method:</span>
-            <span class="value"><%=orderData.paymentMethod%></span>
-        </div>
-        
-        <form id="statusForm">
-            <input type="hidden" name="id" id="orderId" value="<%=orderData._id%>">
-            <input type="hidden" name="itemId" id="itemId" value="<%=item._id%>">
-
-            <label for="deliveryDate"><strong>Delivery Date: </strong></label>
-            <input type="date" id="deliveryDate" class="shadow-sm bg-body rounded">
-            
-            <label for="orderStatus"><strong>Status: </strong></label>
-            <select name="orderStatus" id="orderStatus" class="shadow-sm bg-body rounded">
-                <% for (let i = 0; i < orderStatus.length; i++) { %>
-                    <option 
-                        value="<%= orderStatus[i] %>" 
-                        <%= orderStatus[i] === item.orderStatus ? 'selected' : '' %>>
-                        <%= orderStatus[i] %>
-                    </option>
-                <% } %>
-            </select>
-            <button type="submit" class="btn btn-secondary p-1">Update</button>
-        </form>
-        <div id="errorMessage" class="fw-light text-danger"></div>
-    </div>
-
-    <!-- Single Product Details -->
-    <div class="box shadow-sm p-3 mb-5 bg-body rounded">
-        <h3>Product Details</h3>
-        <div class="product-item">
-            <img src="/uploads/re-product-image/<%=item.productId.productImage[0]%>" alt="<%=item.productId.productName%>">
-            <div>
-                <p><strong>Name: </strong><%=item.productId.productName%></p>
-                <p><strong>Size: </strong><%=item.size%></p>
-                <p><strong>Quantity: </strong><%=item.quantity%></p>
-                <p><strong>Price: </strong>₹ <%=item.price%></p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Delivery address -->
-    <div class="box shadow-sm p-3 mb-5 bg-body rounded">
-        <h3>Delivery Address</h3>
-        <div class="detail-row">
-            <strong><%= address.name %></strong>
-        </div>
-        <div class="detail-row">
-            <%= address.building %>, <%= address.area %><br>
-            <% if (address.landmark) { %>
-                <%= address.landmark %><br>
-            <% } %>
-            <%= address.city %>, <%= address.state %> - <%= address.pincode %><br>
-            Phone: <%= address.phone %>
-            <% if (address.alternatePhone) { %>
-                , Alt: <%= address.alternatePhone %>
-            <% } %>
-        </div>
-    </div>
-
+  </div>
+<% }) %>
+<div class="mb-5">
+    <%if(orderData.items.every(item=> item.returnRequest.status === 'Pending')){%>
+    <a href="/admin/approve_all?id=<%=orderData._id%>" class="btn btn-success">Approve All Return Requests</a>
+    <a href="/admin/reject_all?id=<%=orderData._id%>" class="btn btn-danger">Reject All Return Requests</a>
+    <%}%>
+    <%if(orderData.items.every(item=> item.returnRequest.status === 'Approved')){%>
+      <a href="/admin/return/refund?id=<%= orderData._id %>" class="btn btn-success mt-2 w-100">Refund All</a>
+      <%}%>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded',()=>{
-    document.getElementById('statusForm').addEventListener('submit', async function(event){
-        event.preventDefault()
 
-        const id = document.getElementById('orderId').value
-        const itemId = document.getElementById('itemId').value
-        const status = document.getElementById('orderStatus').value
-        const deliveryDate = new Date(document.getElementById('deliveryDate').value)
-        deliveryDate.setHours(0,0,0,0) 
-        const today = new Date()
-        today.setHours(0,0,0,0)
+                <!-- Delivery address -->
+                <div class="box shadow-sm p-3 mb-5 bg-body rounded">
+                    <h3>Delivery Address</h3>
+                    <div class="detail-row">
+                        <strong>
+                            <%= address.name %>
+                        </strong>
+                    </div>
+                    <div class="detail-row">
+                        <%= address.building %>, <%= address.area %><br>
+                                <% if (address.landmark) { %>
+                                    <%= address.landmark %><br>
+                                        <% } %>
+                                            <%= address.city %>, <%= address.state %> - <%= address.pincode %><br>
+                                                        Phone: <%= address.phone %>
+                                                            <% if (address.alternatePhone) { %>
+                                                                , Alt: <%= address.alternatePhone %>
+                                                                    <% } %>
+                    </div>
+                </div>
 
-        document.getElementById('errorMessage').style.display = 'none'
-        document.getElementById('errorMessage').innerHTML = ''
+    </div>
 
-        if( deliveryDate <= today){
-            document.getElementById('errorMessage').style.display = 'block'
-            document.getElementById('errorMessage').innerHTML = "Invalid Delivery Date"
-            return
+    <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const forms = document.querySelectorAll('.status-form');
+
+    forms.forEach(form => {
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const orderId = form.querySelector('.orderId').value;
+        const itemId = form.querySelector('.itemId').value;
+        const status = form.querySelector('.orderStatus').value;
+        const deliveryDateInput = form.querySelector('.deliveryDate').value;
+
+        const errorContainer = document.getElementById('errorMessage');
+
+        errorContainer.style.display = 'none';
+        errorContainer.innerHTML = '';
+
+        if (!deliveryDateInput) {
+          errorContainer.style.display = 'block';
+          errorContainer.innerHTML = "Please select a delivery date";
+          return;
         }
 
+        const deliveryDate = new Date(deliveryDateInput);
+        deliveryDate.setHours(0, 0, 0, 0);
 
-        await fetch('/admin/orders/view_order', {
-            method: 'post',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ id, itemId, status, deliveryDate })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                window.location.href = '/admin/orders'
-            } else {
-                window.location.href = '/admin/pageNotFound'
-            }
-        })
-        .catch(err => {
-            window.location.href = '/admin/pageNotFound'
-        })
-    })
-})
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (deliveryDate <= today) {
+          errorContainer.style.display = 'block';
+          errorContainer.innerHTML = "Invalid Delivery Date";
+          return;
+        }
+
+        try {
+          const res = await fetch('/admin/orders/view_order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: orderId, itemId, status, deliveryDate })
+          });
+
+          const data = await res.json();
+          if (data.success) {
+            window.location.reload();
+          } else {
+            window.location.href = '/admin/pageNotFound';
+          }
+        } catch (err) {
+          window.location.href = '/admin/pageNotFound';
+        }
+      });
+    });
+  });
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-<%- include("../../views/partials/admin/footer") %>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <%- include("../../views/partials/admin/footer") %>
