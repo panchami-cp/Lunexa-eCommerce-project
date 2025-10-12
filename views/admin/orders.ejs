@@ -29,18 +29,16 @@
   </style>
 </head>
 <div class="container-fluid px-4">
-<!-- Page Header -->
 <div class="content-header mb-4 mt-4">
   <h2 class="content-title card-title">Orders</h2>
 </div>
 
-<!-- Search Form-->
 <div class="row mb-4 justify-content-center">
   <div class="col-md-10">
     <div class="d-flex justify-content-between align-items-center">
       <!-- Search Form -->
       <form action="/admin/orders" method="get" id="searchForm" class="d-flex gap-2">
-    <!-- Search -->
+    <!-- search input -->
     <div class="position-relative flex-grow-1">
         <input 
             type="text" 
@@ -52,7 +50,7 @@
        
     </div>
 
-    <!-- Sort -->
+    <!-- sort -->
     <select name="sort" class="form-select rounded-pill">
         <option value="newest" <%= sort === "newest" ? "selected" : "" %>>Newest First</option>
         <option value="oldest" <%= sort === "oldest" ? "selected" : "" %>>Oldest First</option>
@@ -60,21 +58,79 @@
         <option value="amountLow" <%= sort === "amountLow" ? "selected" : "" %>>Amount Low → High</option>
     </select>
 
-    <!-- Status Filter -->
+    <!-- status filter -->
     <select name="status" class="form-select rounded-pill">
         <option value="">All Status</option>
-        <option value="Pending" <%= statusFilter === "Pending" ? "selected" : "" %>>Pending</option>
-        <option value="Shipped" <%= statusFilter === "Shipped" ? "selected" : "" %>>Shipped</option>
+        <option value="Placed" <%= statusFilter === "Placed" ? "selected" : "" %>>Placed</option>
+        <option value="Cancelled" <%= statusFilter === "Cancelled" ? "selected" : "" %>>Cancelled</option>
         <option value="Delivered" <%= statusFilter === "Delivered" ? "selected" : "" %>>Delivered</option>
-        <option value="Canceled" <%= statusFilter === "Canceled" ? "selected" : "" %>>Canceled</option>
+        <option value="Returned" <%= statusFilter === "Returned" ? "selected" : "" %>>Returned</option>
+    </select>
+<!-- date filter -->
+    <select name="dateFilter" id="dateFilter" class="form-select rounded-pill">
+        <option value="">All Dates</option>
+        <option value="today" <%= dateFilter === "today" ? "selected" : "" %>>Today</option>
+        <option value="week" <%= dateFilter === "week" ? "selected" : "" %>>This Week</option>
+        <option value="year" <%= dateFilter === "year" ? "selected" : "" %>>This Year</option>
+        <option value="custom" <%= dateFilter === "custom" ? "selected" : "" %>>Custom Range</option>
     </select>
 
+     <!-- custom dates input -->
+    <input type="hidden" name="startDate" id="hiddenStartDate" >
+    <input type="hidden" name="endDate" id="hiddenEndDate" >
+
     <!-- Submit -->
-    <button class="btn btn-dark rounded-pill px-4" type="submit">Apply</button>
+    <button class="btn btn-dark btn-sm rounded-pill px-4" type="submit">Apply</button>
 
     <!-- Reset -->
-    <a href="/admin/orders" class="btn btn-outline-secondary rounded-pill px-4">Clear</a>
+    <a href="/admin/orders" class="btn btn-sm btn-outline-secondary rounded-pill ">Clear</a>
 </form>
+
+<!-- Download button -->
+<div class="dropdown">
+  <button class="btn btn-primary dropdown-toggle rounded-pill px-4" type="button" id="downloadDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+    Download Report
+  </button>
+  <ul class="dropdown-menu" aria-labelledby="downloadDropdown">
+    <li>
+      <a class="dropdown-item" href="#" id="downloadPdf">
+        <i class="bi bi-file-earmark-pdf text-danger me-2"></i> PDF
+      </a>
+    </li>
+    <li>
+      <a class="dropdown-item" href="#" id="downloadExcel">
+        <i class="bi bi-file-earmark-excel text-success me-2"></i> Excel
+      </a>
+    </li>
+  </ul>
+</div>
+
+<!-- custom date modal -->
+<div class="modal fade" id="customDateModal" tabindex="-1" aria-labelledby="customDateModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-3">
+      <div class="modal-header">
+        <h5 class="modal-title" id="customDateModalLabel">Select Custom Date Range</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="startDate" class="form-label">Start Date</label>
+          <input type="date" id="startDate" class="form-control" >
+        </div>
+        <div>
+          <label for="endDate" class="form-label">End Date</label>
+          <input type="date" id="endDate" class="form-control" >
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" id="applyCustomDate" class="btn btn-primary">Apply</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
     </div>
   </div>
@@ -176,8 +232,54 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <%- include("../../views/partials/admin/footer") %>
 <script>
+  //reset page
     function resetPage(){
         document.getElementById("searchInput").value = ""
         document.getElementById('searchForm').submit()
     }
+
+    //custome date
+     const dateFilter = document.getElementById('dateFilter')
+    const customDateModal = new bootstrap.Modal(document.getElementById('customDateModal'))
+    const applyCustomDateBtn = document.getElementById('applyCustomDate')
+    const hiddenStart = document.getElementById('hiddenStartDate')
+    const hiddenEnd = document.getElementById('hiddenEndDate')
+    const searchForm = document.getElementById('searchForm')
+
+    dateFilter.addEventListener('change', () => {
+        if (dateFilter.value === 'custom') {
+            customDateModal.show()
+        }
+    })
+
+    applyCustomDateBtn.addEventListener('click', () => {
+        const start = document.getElementById('startDate').value
+        const end = document.getElementById('endDate').value
+
+        if (!start || !end) {
+            alert('Please select both start and end dates.')
+            return
+        }
+
+        hiddenStart.value = start
+        hiddenEnd.value = end
+
+        customDateModal.hide()
+        searchForm.submit()
+    })
+// pass filters to url
+     document.addEventListener('DOMContentLoaded', () => {
+    const queryString = new URLSearchParams(window.location.search).toString();
+
+    document.getElementById('downloadPdf').addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.href = `/admin/orders/report/pdf?${queryString}`;
+    });
+
+    document.getElementById('downloadExcel').addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.href = `/admin/orders/report/excel?${queryString}`;
+    });
+  });
 </script>
+
