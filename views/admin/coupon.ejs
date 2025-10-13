@@ -218,7 +218,16 @@
                       <td class="text-capitalize"><%= coupon.name%></td>
                       <td><%= coupon.code %></td>
                       <td><%= new Date(coupon.startDate).toLocaleDateString("en-GB")%></td>
-                      <td><%= new Date(coupon.endDate).toLocaleDateString("en-GB")%></td>
+                      <%
+                        const today = new Date()
+                        today.setHours(0,0,0,0)
+                        const expired = coupon.endDate.setHours(0,0,0,0) < today
+                      %>
+                      <%if(!expired){%>
+                        <td><%= new Date(coupon.endDate).toLocaleDateString("en-GB")%></td>
+                      <%}else{%>
+                        <td class="text-danger">Expired</td>
+                      <%}%>
                       <td class="text-capitalize"><%= coupon.offerType %></td>
                       <%if(coupon.offerType === "percentage"){%>
                         <td><%=coupon.offerPercentage%>%</td>

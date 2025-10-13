@@ -28,6 +28,10 @@ const loadCheckout = async(req,res)=>{
             return res.redirect('/pageNotFound')
         }
 
+        const wallet = await Wallet.findOne({userId: userId})
+
+        const walletBalance = wallet? wallet.balance : 0
+
         const usedCouponIds = (userData.usedCoupon || []).map(c => c.couponId).filter(id => id !== null && id !== undefined)
 
         let today = new Date()
@@ -91,8 +95,8 @@ const loadCheckout = async(req,res)=>{
                 priceDetails,
                 currentCoupons,
                 applicableCoupon,
-                couponDiscount
-        
+                couponDiscount,
+                walletBalance
             })
 
         }
