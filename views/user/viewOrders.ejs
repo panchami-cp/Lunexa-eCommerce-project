@@ -36,18 +36,16 @@
                     <div class="product-details">
                       <h5 class="text-capitalize">
                         <%= item.productId.productName %>
-                          <% if(item.orderStatus==='Cancelled' ){ %>
-                            <span class="text-secondary">(Cancelled)</span>
-                            <% } else if(item.returnRequest && item.returnRequest.status==='Pending' ){ %>
-                              <span class="text-warning">(Return Pending)</span>
-                              <% } else if(item.returnRequest && item.returnRequest.status==='Approved' ){ %>
-                                <span class="text-success">(Return Approved)</span>
-                                <% } else if(item.returnRequest && item.returnRequest.status==='Rejected' ){ %>
-                                  <span class="text-danger">(Return Rejected)</span>
-                                  <% } else if(item.returnRequest && item.returnRequest.status==='Refunded' ){ %>
-                                    <span class="text-success">(Refunded)</span>
-                                    <% } %>
-
+                          <% if(item.returnRequest && item.returnRequest.status){ %>
+                            <span class="text-secondary"><%=item.returnRequest.status%></span>
+                            <% } else if(item.orderStatus ){ %>
+                              <%if(item.orderStatus === 'Placed'){%> <span class="badge bg-info text-white">Order Placed</span> <%}%>
+                              <%if(item.orderStatus === 'Cancelled'){%> <span class="badge bg-secondary">Order Placed</span> <%}%>
+                              <%if(item.orderStatus === 'Shipped'){%> <span class="badge bg-primary">Order Placed</span> <%}%>
+                              <%if(item.orderStatus === 'Out for delivery'){%> <span class="badge bg-light text-dark">Order Placed</span> <%}%>
+                              <%if(item.orderStatus === 'Delivered'){%> <span class="badge bg-success">Order Placed</span> <%}%>
+                              <%if(item.orderStatus === 'Returned'){%> <span class="badge bg-dark">Order Placed</span> <%}%>
+                              <% }%>
                       </h5>
                       <p>Size: <%= item.size %></p>
                       <p>Price: ₹<%= item.price %></p>

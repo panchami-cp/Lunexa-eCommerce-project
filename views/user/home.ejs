@@ -1,15 +1,6 @@
 
  <%- include("../partials/user/header")%>
 
- <head>
-  <!-- <style>
- .wishlist-btn.active use {
-  fill: red;
-}
-
-  </style> -->
- </head>
-
  <section class="video py-5 overflow-hidden">
   <div class="container-fluid">
     <div class="row">
@@ -17,14 +8,6 @@
         <div class="video-bg">
           <img src="images/video-image.jpg" alt="video" class="video-image img-fluid">
         </div>
-        <!-- <div class="video-player">
-          <a class="youtube" href="https://www.youtube.com/embed/pjtsGzQjFM4">
-            <svg width="24" height="24" viewBox="0 0 24 24">
-              <use xlink:href="#play"></use>
-            </svg>
-            <img src="images/text-pattern.png" alt="pattern" class="text-rotate">
-          </a>
-        </div> -->
       </div>
     </div>
   </div>
@@ -47,16 +30,16 @@
                      <img src="/uploads/re-product-image/<%=products[i].productImage[0]%>" alt="<%=products[i].productName%>" class="img-fluid">
                    </a>
                    <!-- wishlist icon -->
-                   <a href="javascript:void(0)" 
-                      class="btn-icon btn-wishlist wishlist-btn" 
-                      data-id="<%= products[i]._id %>" 
-                      style="position: absolute; top: 8px; right: 8px;">
-                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <use xlink:href="#heart"></use>
-                      </svg>
-                      <!-- <i class="fa-regular fa-heart"></i> -->
-                    </a>
-
+                  <a href="javascript:void(0);" 
+   class="btn-icon btn-wishlist wishlist-btn" 
+   data-id="<%= products[i]._id %>" 
+   style="position: absolute; top: 8px; right: 8px;">
+  <% if (wishlistIds.includes(products[i]._id.toString())) { %>
+                        <i class="fa-solid fa-heart" style="color: red;"></i>
+                      <% } else { %>
+                        <i class="fa-regular fa-heart"></i>
+                      <% } %>
+</a>
                  </div>
                  <div class="banner-content py-4">
                    <h5 class="element-title text-uppercase">
@@ -64,9 +47,7 @@
                    </h5>
                    <p class="mb-0">Price: Rs.<%=products[i].salePrice%> 
                     <%if(products[i].salePrice !== products[i].regularPrice){ %>
-
                     <strike>Rs. <%=products[i].regularPrice%></strike> 
-                    
                   <%}%>
                   </p>
                    <!-- add to cart -->
@@ -83,7 +64,6 @@
         <a href="#" class="btn-link fs-6 text-uppercase item-anchor text-decoration-none">Discover Now</a>
       </div>
    </section>
-
    <section class="features py-5">
      <div class="container">
        <div class="row d-flex justify-content-center">
@@ -121,15 +101,16 @@
    class="btn-icon btn-wishlist wishlist-btn" 
    data-id="<%= categories[i].productsByCategory[j]._id %>" 
    style="position: absolute; top: 8px; right: 8px;">
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-    <use xlink:href="#heart"></use>
-  </svg>
+  <% if (wishlistIds.includes(categories[i].productsByCategory[j]._id.toString())) { %>
+                        <i class="fa-solid fa-heart" style="color: red;"></i>
+                      <% } else { %>
+                        <i class="fa-regular fa-heart"></i>
+                      <% } %>
 </a>
                  <div class="product-content">
                    <h5 class="element-title text-uppercase fs-5 mt-3">
                      <a href="index.html"><%=categories[i].productsByCategory[j].productName%></a>
                    </h5>
-
                    <!-- add to cart -->
                    <!-- <a href="#" class="text-decoration-none add-to-cart-link" data-after="Add to cart" data-product-id="<%= categories[i].productsByCategory[j]._id %>"></a> -->
                     <span>Price: Rs.<%=categories[i].productsByCategory[j].salePrice%> 
@@ -143,9 +124,7 @@
            </div>
            <%}%>
            <%}else{%>
-
             <p>No products available in this category</p>
-
             <%}%>
          </div>
          <div class="swiper-pagination"></div>
@@ -153,9 +132,6 @@
      </div>
    </section>
    <%}%>
- 
-   
-
    <section class="newsletter bg-light" style="background: url(images/pattern-bg.png) no-repeat;">
      <div class="container">
        <div class="row justify-content-center">
@@ -171,41 +147,45 @@
        </div>
      </div>
    </section> 
-
-
    <!-- add to wishlist -->
   <script>
+ document.addEventListener("DOMContentLoaded", function () {
+  const wishlistButtons = document.querySelectorAll(".wishlist-btn");
 
-  document.addEventListener("DOMContentLoaded", function () {
-    const wishlistButtons = document.querySelectorAll(".wishlist-btn")
+  wishlistButtons.forEach(button => {
+    button.addEventListener("click", async function () {
+      const productId = this.getAttribute("data-id");
+      const icon = this.querySelector("i");
 
-    wishlistButtons.forEach(button => {
-      button.addEventListener("click", async function () {
-        const productId = this.getAttribute("data-id");
+      try {
+        const response = await fetch(`/addtoWishlist?id=${productId}`, {
+          method: "GET"
+        })
 
-        try {
-          const response = await fetch(`/addtoWishlist?id=${productId}`, {
-            method: 'GET'
-          })
+        const data = await response.json();
 
-          const data = await response.json();
-
-          if (data.success) {
-            this.classList.add("active")
-            const svg = this.querySelector('svg')
-            svg.setAttribute("fill", "red")
-            showPopup(data.message || "Added to wishlist", "success")
+        if (data.success) {
+          if (data.added) {
+            icon.classList.remove("fa-regular");
+            icon.classList.add("fa-solid");
+            icon.style.color = "red";
+            showPopup(data.message || "Added to wishlist", "success");
           } else {
-            showPopup(data.message || "Something went wrong", "error")
+            icon.classList.remove("fa-solid");
+            icon.classList.add("fa-regular");
+            icon.style.color = "";
+            showPopup(data.message || "Removed from wishlist", "success");
           }
-        } catch (err) {
-          console.error("Wishlist error:", err)
-          window.location.href = "/pageNotFound"
+        } else {
+          showPopup(data.message || "Something went wrong", "error");
         }
-      });
+      } catch (err) {
+        console.error("Wishlist error:", err);
+        window.location.href = "/pageNotFound";
+      }
     });
   });
-
+});
 
 
 // popup
@@ -228,11 +208,7 @@
     }, 2000)
   }
 </script> 
-
-
- 
    <!-- footer -->
- 
    <%- include("../partials/user/footer")%>
    <script src="js/jquery.min.js"></script>
    <script src="js/plugins.js"></script>
@@ -243,9 +219,4 @@
    <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
    <script src="js/script.min.js"></script>
  </body>
- 
  </html>
-
-  
-
- 

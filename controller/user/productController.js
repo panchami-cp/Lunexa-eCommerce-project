@@ -40,59 +40,42 @@ const productDetails = async (req, res)=>{
 const addToWishlist = async(req, res)=>{
 
 try {
-    const productId = req.query.id;
-    const userId = req.session.user;
+    const productId = req.query.id
+    const userId = req.session.user
 
-    const userData = await User.findById(userId)
+const userData = await User.findById(userId);
+if (!userData) return res.status(400).json({ success: false, message: "User not found" })
 
-    if(!userData){
-      return res.status(400).json({success: false})
-    }
-  
-    let existingWishlist = await Wishlist.findOne({ userId });
+let wishlist = await Wishlist.findOne({ userId });
 
+if (!wishlist) {
+  wishlist = await Wishlist.create({
+    userId,
+    products: [{ productId }],
+    totalProducts: 1
+  })
+  return res.json({ success: true, added: true, message: "Added to wishlist" });
+}
 
-    if (existingWishlist) {
+const exists = wishlist.products.some(p => p.productId.toString() === productId);
 
-      const existingProduct = existingWishlist.products.some(p => p.productId.toString() === productId);
+if (exists) {
+  await Wishlist.findOneAndUpdate(
+    { userId },
+    { $pull: { products: { productId } } },
+    { new: true }
+  )
+  return res.json({ success: true, added: false, message: "Removed from wishlist" })
 
-      // const cart = await Cart.findOne({userId: userId})
-      
-      // const productInCart = cart?.items?.some(item=> item.productId.toString() === productId)
+} else {
+  await Wishlist.findOneAndUpdate(
+    { userId },
+    { $addToSet: { products: { productId } } },
+    { new: true }
+  )
+  return res.json({ success: true, added: true, message: "Added to wishlist" });
+}
 
-
-      if (!existingProduct) {
-
-        
-
-          existingWishlist.products.push({ productId });
-
-          existingWishlist.totalProducts = existingWishlist.products.length
-
-          await existingWishlist.save();
-
-          return res.json({ success: true });
-        
-
-      } else {
-
-        return res.json({ success: false, message: "Already in wishlist" });
-
-      }
-    } else {
-
-      const newWishlist = new Wishlist({
-        userId,
-        products: [{ productId }],
-        totalProducts: 1
-        
-      });
-
-      await newWishlist.save();
-
-      res.json({ success: true, message:"Added to wishlist"});
-
-    }
   } catch (error) {
 
     console.error("Wishlist error:", error);
@@ -429,6 +412,23 @@ const updateQuantity = async(req, res)=>{
     
   }
 }
+const loadSizes = async(req, res)=>{
+  try {
+     const productId = req.query.id;
+    const product = await Product.findById(productId);
+
+    if (!product) {
+      return res.json({ success: false, message: "Product not found" });
+    }
+
+    const availableSizes = product.sizeVariant.filter(s => s.quantity > 0)
+    res.json({ success: true, availableSizes });
+
+  } catch (error) {
+    console.error(err);
+    res.json({ success: false, message: "Error fetching sizes" });
+  }
+}
 
 
 module.exports = {
@@ -439,5 +439,6 @@ module.exports = {
     loadcart,
     removeProduct,
     updateQuantity,
-    removeFromWishlist
+    removeFromWishlist,
+    loadSizes
 }

@@ -9,7 +9,7 @@ const PDFDocument = require('pdfkit')
 
 const listOrders = async (req, res)=>{
     try {
-        let page = parseInt(req.query.page) || 1
+    let page = parseInt(req.query.page) || 1
     const limit = 4
     let skip = (page - 1) * limit
 
@@ -781,6 +781,117 @@ function buildOrderQuery({ search, statusFilter, dateFilter, startDate, endDate 
     return query;
 }
 
+const loadSalesReport = async (req, res)=>{
+    try {
+    let page = parseInt(req.query.page) || 1
+    const limit = 4
+    let skip = (page - 1) * limit
+    const search = req.query.search ? req.query.search.trim() : ""
+    const sort = req.query.sort || "newest"
+    const dateFilter = req.query.dateFilter || ""
+    const startDate = req.query.startDate
+    const endDate = req.query.endDate
+
+    let query = {}
+
+    if (search) {
+        const users = await User.find({
+            fullname: { $regex: search, $options: "i" }
+        }).select("_id")
+        query.userId = { $in: users.map(u => u._id) }
+    }
+
+    if (dateFilter) {
+        let start, end
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+
+        switch (dateFilter) {
+            case "today":
+                start = new Date(today)
+                end = new Date(today)
+                end.setHours(23, 59, 59, 999)
+                break
+
+            case "week":
+                const dayOfWeek = today.getDay() 
+                const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+                start = new Date(today)
+                start.setDate(today.getDate() - diffToMonday)
+                end = new Date(today)
+                end.setHours(23, 59, 59, 999)
+                break
+
+            case "year":
+                start = new Date(today.getFullYear(), 0, 1)
+                end = new Date(today.getFullYear(), 11, 31, 23, 59, 59, 999)
+                break
+
+            case "custom":
+                if (startDate && endDate) {
+                    start = new Date(startDate)
+                    start.setHours(0, 0, 0, 0)
+                    end = new Date(endDate)
+                    end.setHours(23, 59, 59, 999)
+                }
+                break
+        }
+
+        if (start && end) {
+            query.createdOn = { $gte: start, $lte: end }
+        }
+    }
+
+    query.items = { $elemMatch: { orderStatus: "Delivered" } } 
+
+let sortOption = {}
+switch (sort) {
+    case "oldest":
+        sortOption = { createdOn: 1 }
+        break
+    case "amountHigh":
+        sortOption = { finalAmount: -1 }
+        break
+    case "amountLow":
+        sortOption = { finalAmount: 1 }
+        break
+    default:
+        sortOption = { createdOn: -1 }
+}
+
+const orderData = await Order.find(query)
+    .populate("userId")
+    .populate("items.productId")
+    .sort(sortOption)
+    .skip(skip)
+    .limit(limit)
+    .lean()
+
+    orderData.forEach(order => {
+  order.items = order.items.filter(item => item.orderStatus === "Delivered");
+})
+
+    
+
+const count = await Order.countDocuments(query)
+
+res.render("admin/salesReport", {
+    orderData,
+    currentPage: page,
+    totalPages: Math.ceil(count / limit),
+    search,
+    sort,
+    dateFilter,
+    startDate,
+    endDate
+})
+        
+    } catch (error) {
+        console.error("Error in loading sales report page: ", error)
+        res.redirect('/pageNotFound')
+    }
+}
+
 
 module.exports = {
     listOrders,
@@ -792,5 +903,6 @@ module.exports = {
     refund,
     approveAllReturn,
     generateExcelReport,
-    generatePdfReport
+    generatePdfReport,
+    loadSalesReport
 }

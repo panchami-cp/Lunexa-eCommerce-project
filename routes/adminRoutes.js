@@ -57,6 +57,7 @@ router.post('/return/refund', adminAuth, orderController.refund)
 router.get('/approve_all', adminAuth, orderController.approveAllReturn)
 router.get('/orders/report/pdf',adminAuth, orderController.generatePdfReport)
 router.get('/orders/report/excel', adminAuth, orderController.generateExcelReport)
+router.get('/sales_report', adminAuth, orderController.loadSalesReport)
 
 //coupon controller
 router.get('/coupon', adminAuth, couponController.loadCoupon)

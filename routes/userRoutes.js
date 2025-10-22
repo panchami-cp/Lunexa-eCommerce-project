@@ -66,6 +66,7 @@ router.get('/cart', userAuth, productController.loadcart)
 router.get('/remove_product', userAuth, productController.removeProduct)
 router.post('/cart/update_quantity',userAuth, productController.updateQuantity)
 router.get('/removeFromWishlist', userAuth, productController.removeFromWishlist)
+router.get('/product-sizes',userAuth, productController.loadSizes)
 
 //order controller
 router.get('/checkout', userAuth, orderController.loadCheckout)

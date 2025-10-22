@@ -92,8 +92,6 @@
     </aside>
 
      <!-- Products -->
-    
-      
       <main class="shop-products container mt-4">
         <div id="resultsContainer">
         <div class="row">
@@ -107,9 +105,11 @@
                   </a>
                   <!-- wishlist icon -->
                   <a href="javascript:void(0)" class="btn-icon btn-wishlist wishlist-btn" data-id="<%=products[i]._id%>">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <use xlink:href="#heart"></use>
-                    </svg>
+                   <% if (wishlistIds.includes(products[i]._id.toString())) { %>
+                        <i class="fa-solid fa-heart" style="color: red;"></i>
+                      <% } else { %>
+                        <i class="fa-regular fa-heart"></i>
+                      <% } %>
                   </a>
                   <div class="product-content">
                     <h5 class="element-title text-uppercase fs-5 mt-3">
@@ -219,34 +219,43 @@
 <!-- add to wishlist -->
   <script>
 
-    document.addEventListener("DOMContentLoaded", function () {
-    const wishlistButtons = document.querySelectorAll(".wishlist-btn");
+ document.addEventListener("DOMContentLoaded", function () {
+  const wishlistButtons = document.querySelectorAll(".wishlist-btn");
 
-    wishlistButtons.forEach(button => {
-      button.addEventListener("click", async function () {
-        const productId = this.getAttribute("data-id");
+  wishlistButtons.forEach(button => {
+    button.addEventListener("click", async function () {
+      const productId = this.getAttribute("data-id");
+      const icon = this.querySelector("i");
 
-        try {
-          const response = await fetch(`/addtoWishlist?id=${productId}`, {
-            method: 'GET'
-          });
+      try {
+        const response = await fetch(`/addtoWishlist?id=${productId}`, {
+          method: "GET"
+        })
 
-          const data = await response.json();
+        const data = await response.json();
 
-          if (data.success) {
-            showPopup(data.message || "Added to wishlist", "success")
-            this.classList.add("active");
-            const svg = this.querySelector('svg')
-            svg.setAttribute("fill", "red")
+        if (data.success) {
+          if (data.added) {
+            icon.classList.remove("fa-regular");
+            icon.classList.add("fa-solid");
+            icon.style.color = "red";
+            showPopup(data.message || "Added to wishlist", "success");
           } else {
-            showPopup(data.message || "Somthing went wrong", "error");
+            icon.classList.remove("fa-solid");
+            icon.classList.add("fa-regular");
+            icon.style.color = "";
+            showPopup(data.message || "Removed from wishlist", "success");
           }
-        } catch (err) {
-          console.error("Wishlist error:", err);
+        } else {
+          showPopup(data.message || "Something went wrong", "error");
         }
-      });
+      } catch (err) {
+        console.error("Wishlist error:", err);
+        window.location.href = "/pageNotFound";
+      }
     });
   });
+});
 
 
   //popup 

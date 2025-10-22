@@ -19,7 +19,6 @@ const  loadHomePage = async (req,res)=>{
         const categories = await Category.find({isListed: true})
         const wishlist = await Wishlist.findOne({userId: userId})
         const cart = await Cart.findOne({userId: userId})
-        const totalWishProducts = wishlist? wishlist.products.length: 0
         const totalCart = cart?cart.totalQuantity:0
 
         const categoryIds = categories.map((cat)=> cat._id)
@@ -39,24 +38,26 @@ const  loadHomePage = async (req,res)=>{
         }
 
     }
-      
+
+    let wishlistIds = []
+      if(wishlist){
+        wishlistIds = wishlist.products.map(item=> item.productId.toString())
+      }
         if(userId){
-            const userData = await User.findOne({_id: userId})
             return res.render('user/home',{
                 totalCart,
-                totalWishProducts,
                 products: productData,
-                categories: categories
+                categories: categories,
+                wishlistIds
             })
         }else{
             return res.render('user/home',{products: productData,
                 categories: categories,
                 totalCart,
-                totalWishProducts
+                wishlistIds
             })
 
         }
-    
    } catch (error) {
 
     console.error('Error loding home page, '+error)
@@ -397,7 +398,6 @@ const loadShopAll = async (req, res) => {
 
     const userData = await User.findOne({ _id: user })
     const totalCart = cart? cart.totalQuantity: 0
-    const totalWishProducts = wishlist? wishlist.products.length: 0
     const categories = await Category.find({isListed: true})
     const categoryIds = categories.map(cat => cat._id.toString())
 
@@ -456,7 +456,10 @@ const loadShopAll = async (req, res) => {
       _id: c._id,
       categoryName: c.categoryName,
     }))
-
+    let wishlistIds = []
+    if(wishlist){
+        wishlistIds = wishlist.products.map(item=> item.productId.toString())
+    }
     const templateData = {
             user: userData,
             products,
@@ -466,8 +469,8 @@ const loadShopAll = async (req, res) => {
             currentPage: page,
             search,
             totalCart,
-            totalWishProducts,
-            selectedCategory
+            selectedCategory,
+            wishlistIds
         }
 
         if(isAjax){
@@ -482,15 +485,7 @@ const loadShopAll = async (req, res) => {
   } catch (error) {
     console.error("Error in loading shop all page: ", error);
   }
-};
-
-
-
-
-
-
-
-
+}
 module.exports = {
     loadHomePage,
     loadSignup,
