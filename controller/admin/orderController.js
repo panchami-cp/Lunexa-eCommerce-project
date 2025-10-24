@@ -869,6 +869,29 @@ const orderData = await Order.find(query)
 
     orderData.forEach(order => {
   order.items = order.items.filter(item => item.orderStatus === "Delivered");
+
+  const totalDeliveredPrice = order.items.reduce((sum, item) => sum + item.totalPrice, 0)
+
+  order.items = order.items.map(item => {
+    const discountPerUnit = item.regularPrice - item.price;
+    // const totalDiscount = discountPerUnit * item.quantity;
+
+    const couponShareTotal = order.couponDiscount ? (item.totalPrice / totalDeliveredPrice) * order.couponDiscount : 0
+
+    const couponSharePerUnit = couponShareTotal / item.quantity;
+
+    const netAmount =
+      item.quantity * (item.price - couponSharePerUnit);
+
+    return {
+      ...item,
+      discountPerUnit,
+    //   totalDiscount: totalDiscount.toFixed(2),
+    //   couponShareTotal: couponShareTotal.toFixed(2),
+      couponSharePerUnit: couponSharePerUnit.toFixed(2),
+      netAmount: netAmount.toFixed(2)
+    }
+  })
 })
 
     

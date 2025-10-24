@@ -4,76 +4,100 @@
   <link rel="stylesheet" href="/css/user/orderDetails.css">
 </head>
 
+<div class="container my-4">
+  <div class="order-details-box p-4 shadow-sm rounded bg-white">
 
-<div class="container-fluid">
-    <div class="container-fluid">
-  <div class="order-details-box">
+    <!-- ===== TOP ROW: ORDER SUMMARY ===== -->
+    <div class="row mb-4">
+      <!-- Left side: Order details -->
+      <div class="col-md-8">
+        <h4>Order Details</h4>
+        <p><strong>Order ID:</strong> <%= order.orderId %></p>
+        <p><strong>Placed On:</strong> <%= new Date(order.createdOn).toLocaleDateString("en-GB") %></p>
+        <p><strong>Payment Method: </strong><span class="text-capitalize badge bg-light text-dark"><%= order.paymentMethod %></span></p>
+        <p><strong>Total Amount Paid:</strong> ₹<%= order.finalAmount %></p>
+      </div>
 
-    <!-- Top Row: Image + Info -->
-     
-    <div class="d-flex">
-        
-      <img src="/uploads/re-product-image/<%= item.productId.productImage[0] %>" 
-           alt="<%=item.productId.productName%>" 
-           class="product-image me-3">
-            
-    </div>
-       
-    <div class="top-row mt-3">
-     
-
-      <div class="order-info">
-        <div class="order-id"><strong>Order ID:</strong> <%=order.orderId%></div>
-        <div class="delivery-date">
-          Delivery Date: <%=new Date(item.deliveryDate).toLocaleDateString("en-GB")%>
-          <br>
-          <%if(item.orderStatus === 'Placed' || item.orderStatus === 'Processing' || item.orderStatus === 'Shipped' || item.orderStatus === 'Out for delivery' || item.orderStatus === 'Delivered'){%>
-          <a href="/download_invoice?id=<%=order._id%>" class="btn btn-sm btn-outline-secondary">Download Invoice</a>
-          <%}%>
-        </div>
+      <!-- Right side: Delivery info -->
+      <div class="col-md-4 text-md-end text-start">
+        <p><strong>Delivery Date:</strong> <%= new Date(item.deliveryDate).toLocaleDateString("en-GB") %></p>
+        <% if (["Placed", "Processing", "Shipped", "Out for delivery", "Delivered"].includes(item.orderStatus)) { %>
+          <a href="/download_invoice?id=<%= order._id %>" class="btn btn-outline-secondary btn-sm">Download Invoice</a>
+        <% } %>
       </div>
     </div>
 
-    <!-- Status Tracking -->
-   <div class="order-progress">
-    <% 
+    <hr>
+
+    <!-- ===== PRODUCT DETAILS ===== -->
+    <div class="row align-items-center mb-4">
+      <div class="col-md-3 text-center">
+        <img src="/uploads/re-product-image/<%= item.productId.productImage[0] %>" 
+             alt="<%= item.productId.productName %>" 
+             class="img-fluid rounded border product-image">
+      </div>
+      <div class="col-md-9">
+        <h5 class='text-uppercase'><%= item.productId.productName %></h5>
+        <p><strong>Size:</strong> <%= item.size %></p>
+        <p><strong>Quantity:</strong> <%= item.quantity %></p>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- ===== PRICE & ADDRESS DETAILS ===== -->
+    <div class="row mb-5">
+      <!-- Left: Price details -->
+      <div class="col-md-6">
+        <h5 class="mb-3">Price Details</h5>
+        <p><strong>MRP:</strong> ₹<%= item.regularPrice %></p>
+        <p><strong>Discount:</strong> ₹</p>
+        <p><strong>Coupon Share:</strong> ₹<%= item.couponShare ? item.couponShare : "0.00" %></p>
+        <p><strong>Final Payment (per item):</strong> ₹<%= item.price %></p>
+      </div>
+
+      <!-- Right: Address -->
+      <div class="col-md-6">
+        <h5 class=" mb-3">Delivery Address</h5>
+        <p class="text-capitalize"><%= order.address.name %></p>
+        <p class="text-capitalize"><%= order.address.building %>, <%= order.address.area %></p>
+        <p class="text-capitalize"><%= order.address.city %> - <%= order.address.pincode %></p>
+        <p class="text-capitalize"><%= order.address.state %></p>
+        <p><strong>Phone:</strong> <%= order.address.phone %></p>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- ===== ORDER TRACKING ===== -->
+    <div class="order-progress text-center mb-4">
+      <% 
         const steps = ["Placed", "Shipped", "Out for Delivery", "Delivered"];
         const currentIndex = steps.indexOf(item.orderStatus);
-    %>
-    <% steps.forEach((step, index) => { %>
-        <div class="progress-step-container <%= index <= currentIndex ? 'completed' : '' %>">
-            <div class="progress-step <%= index <= currentIndex ? 'completed' : '' %>">
-                <!-- <% if (index <= currentIndex) { %>
-                    <span class="checkmark">&#10003;</span>
-                <% } %> -->
-            </div>
-            <div class="step-label"><%= step %></div>
-        </div>
-    <% }) %>
-</div>
+      %>
+      <div class="d-flex justify-content-center gap-3 flex-wrap">
+        <% steps.forEach((step, index) => { %>
+          <div class="progress-step-container <%= index <= currentIndex ? 'completed' : '' %> text-center">
+            <div class="progress-step <%= index <= currentIndex ? 'completed' : '' %>"></div>
+            <div class="step-label mt-1"><%= step %></div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
 
+    <!-- ===== ACTION BUTTONS ===== -->
+    <div class="text-center mt-4">
+      <% if (["Pending", "Placed", "Processing"].includes(item.orderStatus)) { %>
+        <a href="/cancel_order?id=<%= item._id %>" class="btn btn-danger px-4">Cancel Order</a>
+      <% } %>
 
-
-    <!-- Action Buttons -->
-    <div class="order-actions">
-      <%if(item.orderStatus === 'Pending' || item.orderStatus === 'Placed' || item.orderStatus === 'Processing'){%>
-    <a href="/cancel_order?id=<%=item._id%>" class="btn btn-danger">Cancel Order</a>
-    <%}%>
-      <% if (item.orderStatus === 'Delivered' && (!item.returnRequest || !item.returnRequest.status)) { %>
-    
-        <a href="/return_order?id=<%=item._id%>" class="btn btn-danger">Return</a>
-    
-        
-    <% } %>
-
-      
+      <% if (item.orderStatus === "Delivered" && (!item.returnRequest || !item.returnRequest.status)) { %>
+        <a href="/return_order?id=<%= item._id %>" class="btn btn-danger px-4">Return</a>
+      <% } %>
     </div>
 
   </div>
 </div>
-</div>
-
-
 
 <!-- Footer -->
 <%- include("../partials/user/footer") %>

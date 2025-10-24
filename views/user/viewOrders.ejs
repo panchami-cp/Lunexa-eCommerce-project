@@ -24,7 +24,12 @@
     <% orders.forEach(order=> { %>
       <div class="orders-container">
         <div class="order-box position-relative">
-          <div class="order-id">Order ID: <%= order.orderId %></div>
+          <div class="order-details border p-2 rounded">
+            <p class="order-id"><strong>Order ID:</strong> <%= order.orderId %></p>
+            <p class="order-id"><strong>Placed On:</strong> <%= new Date(order.createdOn).toLocaleDateString("en-GB")%></p>
+            <p class="order-id"><strong>Total Amount Paid:</strong> Rs.<%= order.finalAmount%></p>
+            <p class="order-id"><strong>Payment Method:</strong> <span class="badge bg-light text-dark"><%=order.paymentMethod%></span></p>
+          </div>
           <div class="order-content">
             <!-- Left: Product Info (vertical list) -->
             <div class="products-list " style="width: 100%;">
@@ -37,14 +42,17 @@
                       <h5 class="text-capitalize">
                         <%= item.productId.productName %>
                           <% if(item.returnRequest && item.returnRequest.status){ %>
-                            <span class="text-secondary"><%=item.returnRequest.status%></span>
+                            <%if(item.returnRequest.status === 'Pending'){%> <span class="badge bg-warning text-dark">Return request pending</span> <%}%>
+                            <%if(item.returnRequest.status === 'Approved'){%> <span class="badge bg-success">Return request approved</span> <%}%>
+                            <%if(item.returnRequest.status === 'Rejected'){%> <span class="badge bg-danger">Return request rejected</span> <%}%>
+                            <%if(item.returnRequest.status === 'Refunded'){%> <span class="badge bg-primary">Refunded</span> <%}%>
                             <% } else if(item.orderStatus ){ %>
                               <%if(item.orderStatus === 'Placed'){%> <span class="badge bg-info text-white">Order Placed</span> <%}%>
-                              <%if(item.orderStatus === 'Cancelled'){%> <span class="badge bg-secondary">Order Placed</span> <%}%>
-                              <%if(item.orderStatus === 'Shipped'){%> <span class="badge bg-primary">Order Placed</span> <%}%>
-                              <%if(item.orderStatus === 'Out for delivery'){%> <span class="badge bg-light text-dark">Order Placed</span> <%}%>
-                              <%if(item.orderStatus === 'Delivered'){%> <span class="badge bg-success">Order Placed</span> <%}%>
-                              <%if(item.orderStatus === 'Returned'){%> <span class="badge bg-dark">Order Placed</span> <%}%>
+                              <%if(item.orderStatus === 'Cancelled'){%> <span class="badge bg-danger">Cancelled</span> <%}%>
+                              <%if(item.orderStatus === 'Shipped'){%> <span class="badge bg-primary">Shipped</span> <%}%>
+                              <%if(item.orderStatus === 'Out for delivery'){%> <span class="badge bg-warning text-dark">Out for Delivery</span> <%}%>
+                              <%if(item.orderStatus === 'Delivered'){%> <span class="badge bg-success">Delivered</span> <%}%>
+                              <%if(item.orderStatus === 'Returned'){%> <span class="badge bg-secondary">Returned</span> <%}%>
                               <% }%>
                       </h5>
                       <p>Size: <%= item.size %></p>
