@@ -16,10 +16,7 @@ const listOrders = async (req, res)=>{
     const search = req.query.search ? req.query.search.trim() : ""
     const sort = req.query.sort || "newest"
     const statusFilter = req.query.status || ""
-    const dateFilter = req.query.dateFilter || ""
-    const startDate = req.query.startDate
-    const endDate = req.query.endDate
-
+    
     let query = {}
 
     if (search) {
@@ -31,47 +28,6 @@ const listOrders = async (req, res)=>{
 
     if (statusFilter) {
         query["items"]  = { $elemMatch: { orderStatus: statusFilter } }
-    }
-
-    if (dateFilter) {
-        let start, end
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-
-        switch (dateFilter) {
-            case "today":
-                start = new Date(today)
-                end = new Date(today)
-                end.setHours(23, 59, 59, 999)
-                break
-
-            case "week":
-                const dayOfWeek = today.getDay() 
-                const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
-                start = new Date(today)
-                start.setDate(today.getDate() - diffToMonday)
-                end = new Date(today)
-                end.setHours(23, 59, 59, 999)
-                break
-
-            case "year":
-                start = new Date(today.getFullYear(), 0, 1)
-                end = new Date(today.getFullYear(), 11, 31, 23, 59, 59, 999)
-                break
-
-            case "custom":
-                if (startDate && endDate) {
-                    start = new Date(startDate)
-                    start.setHours(0, 0, 0, 0)
-                    end = new Date(endDate)
-                    end.setHours(23, 59, 59, 999)
-                }
-                break
-        }
-
-        if (start && end) {
-            query.createdOn = { $gte: start, $lte: end }
-        }
     }
 
 let sortOption = {}
@@ -111,9 +67,6 @@ res.render("admin/orders", {
     search,
     sort,
     statusFilter,
-    dateFilter,
-    startDate,
-    endDate
 })
 
 
@@ -431,314 +384,305 @@ const approveAllReturn = async (req, res)=>{
     }
 }
 
-const generateExcelReport = async (req, res)=>{
-    try {
+const generateExcelReport = async (req, res) => {
+  try {
+    const { search, sort, dateFilter, startDate, endDate } = req.query;
 
-        const { search, sort, status, dateFilter, startDate, endDate } = req.query;
+    let query = buildOrderQuery({ search: search?.trim() || "", dateFilter, startDate, endDate });
 
-        let query = buildOrderQuery({
-            search: search?.trim() || "",
-            statusFilter: status || "",
-            dateFilter,
-            startDate,
-            endDate
-        });
-
-        if (search) {
-            const users = await User.find({
-                fullname: { $regex: search, $options: "i" }
-            }).select("_id");
-            query.userId.$in = users.map(u => u._id);
-        }
-
-        let sortOption = {};
-        switch (sort) {
-            case "oldest":
-                sortOption = { createdOn: 1 };
-                break;
-            case "amountHigh":
-                sortOption = { finalAmount: -1 };
-                break;
-            case "amountLow":
-                sortOption = { finalAmount: 1 };
-                break;
-            default:
-                sortOption = { createdOn: -1 };
-        }
-
-        const orders = await Order.find(query)
-            .populate("userId")
-            .populate("items.productId")
-            .sort(sortOption)
-            .lean();
-
-        if (status) {
-            orders.forEach(order => {
-                order.items = order.items.filter(item => item.orderStatus === status);
-            });
-        }
-
-        const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet("Sales Report");
-
-        worksheet.columns = [
-            { header: "Order ID", key: "orderId", width: 25 },
-            { header: "Date", key: "date", width: 15 },
-            { header: "Customer", key: "customer", width: 20 },
-            { header: "Product", key: "product", width: 25 },
-            { header: "Qty", key: "qty", width: 10 },
-            { header: "Price", key: "price", width: 12 },
-            { header: "Discount", key: "discount", width: 12 },
-            { header: "Coupon", key: "coupon", width: 12 },
-            { header: "Total", key: "total", width: 15 },
-            { header: "Payment", key: "payment", width: 15 },
-            { header: "Status", key: "status", width: 15 },
-        ];
-
-        let totalQty = 0;
-        let totalDiscount = 0;
-        let totalCoupon = 0;
-        let totalSales = 0;
-
-        orders.forEach(order => {
-             const totalMRP = order.items.reduce((acc, item) => acc + (item.regularPrice * item.quantity), 0);
-            const totalDiscountAmt = order.items.reduce((acc, item) => acc + ((item.regularPrice - item.price) * item.quantity), 0);
-            const totalSalePrice = totalMRP - totalDiscountAmt;  // Total after discounts but before coupon
-            const couponDiscountTotal = order.couponDiscount || 0;
-
-            order.items.forEach(item => {
-
-                const itemDiscount = (item.regularPrice - item.price) * item.quantity
-                let itemCouponShare = 0;
-
-                if (couponDiscountTotal > 0 && totalSalePrice > 0) {
-                    const itemSalePrice = item.price * item.quantity;
-                    itemCouponShare = (itemSalePrice / totalSalePrice) * couponDiscountTotal;
-                }
-
-                worksheet.addRow({
-                     orderId: order._id.toString(),
-                    date: new Date(order.createdOn).toLocaleDateString(),
-                    customer: order.userId?.fullname || "Guest",
-                    product: item.productId?.productName || "N/A",
-                    qty: item.quantity,
-                    price: item.price.toFixed(2),
-                    discount: itemDiscount.toFixed(2),
-                    coupon: itemCouponShare.toFixed(2),
-                    total: item.totalPrice.toFixed(2),
-                    payment: order.paymentMethod,
-                    status: item.orderStatus
-                });
-
-                totalQty += item.quantity;
-                totalDiscount += itemDiscount;
-                totalCoupon += itemCouponShare;
-                totalSales += item.totalPrice;
-            });
-        });
-
-        const totalRow = worksheet.addRow({
-            orderId: "TOTAL",
-            qty: totalQty,
-            discount: totalDiscount.toFixed(2),
-            coupon: totalCoupon.toFixed(2),
-            total: totalSales.toFixed(2),
-        });
-
-        totalRow.font = { bold: true };
-        totalRow.eachCell(cell => {
-            cell.fill = {
-                type: "pattern",
-                pattern: "solid",
-                fgColor: { argb: "FFE5E5E5" }
-            };
-        });
-
-        res.setHeader(
-            "Content-Type",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        );
-        res.setHeader(
-            "Content-Disposition",
-            "attachment; filename=" + "sales_report.xlsx"
-        );
-
-        await workbook.xlsx.write(res);
-        res.end();
-    } catch (error) {
-        console.error("Excel Report Error:", err);
-        res.redirect('/pageNotFound') 
+    if (search) {
+      const users = await User.find({ fullname: { $regex: search, $options: "i" } }).select("_id");
+      query.userId.$in = users.map((u) => u._id);
     }
+
+    let sortOption = {};
+    switch (sort) {
+      case "oldest":
+        sortOption = { createdOn: 1 };
+        break;
+      case "amountHigh":
+        sortOption = { finalAmount: -1 };
+        break;
+      case "amountLow":
+        sortOption = { finalAmount: 1 };
+        break;
+      default:
+        sortOption = { createdOn: -1 };
+    }
+
+    const orders = await Order.find(query)
+      .populate("userId")
+      .populate("items.productId")
+      .sort(sortOption)
+      .lean();
+
+    if (!orders.length) {
+      return res.status(404).json({ message: "No orders found" });
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Sales Report");
+
+    worksheet.columns = [
+      { header: "Order ID", key: "orderId", width: 25 },
+      { header: "Order Date", key: "orderDate", width: 20 },
+      { header: "Customer", key: "customer", width: 25 },
+      { header: "Product", key: "product", width: 30 },
+      { header: "Quantity", key: "quantity", width: 12 },
+      { header: "MRP (₹)", key: "mrp", width: 15 },
+      { header: "Selling Price (₹)", key: "price", width: 15 },
+      { header: "Discount (₹)", key: "discount", width: 15 },
+      { header: "Coupon Share (₹)", key: "couponShare", width: 15 },
+      { header: "Net Amount (₹)", key: "netAmount", width: 15 },
+    ];
+
+    let totalQty = 0;
+    let totalMrp = 0;
+    let totalDiscount = 0;
+    let totalCoupon = 0;
+    let totalNet = 0;
+
+    orders.forEach((order) => {
+
+      const deliveredItems = order.items.filter((i) => i.orderStatus === "Delivered");
+
+      const totalDeliveredPrice = deliveredItems.reduce((sum, i) => sum + i.totalPrice, 0);
+
+      deliveredItems.forEach((item) => {
+        const discountPerUnit = item.regularPrice - item.price;
+        const totalDiscountItem = discountPerUnit * item.quantity;
+
+        const couponShareTotal = order.couponDiscount
+          ? (item.totalPrice / totalDeliveredPrice) * order.couponDiscount
+          : 0;
+        const couponSharePerUnit = couponShareTotal / item.quantity;
+
+        const netAmount = item.quantity * (item.price - couponSharePerUnit);
+
+        worksheet.addRow({
+          orderId: order._id,
+          orderDate: new Date(order.createdOn).toLocaleDateString("en-GB"),
+          customer: order.userId?.fullname || "Unknown",
+          product: item.productId?.productName || "N/A",
+          quantity: item.quantity,
+          mrp: item.regularPrice.toFixed(2),
+          price: item.price.toFixed(2),
+          discount: totalDiscountItem.toFixed(2),
+          couponShare: couponShareTotal.toFixed(2),
+          netAmount: netAmount.toFixed(2),
+        });
+
+        totalQty += item.quantity;
+        totalMrp += item.regularPrice * item.quantity;
+        totalDiscount += totalDiscountItem;
+        totalCoupon += couponShareTotal;
+      });
+
+      totalNet += order.finalAmount || 0;
+    });
+
+    worksheet.addRow({});
+    worksheet.addRow({
+      orderId: "TOTAL",
+      quantity: totalQty,
+      mrp: totalMrp.toFixed(2),
+      discount: totalDiscount.toFixed(2),
+      couponShare: totalCoupon.toFixed(2),
+      netAmount: totalNet.toFixed(2),
+    });
+
+    const lastRow = worksheet.lastRow;
+    lastRow.font = { bold: true };
+    lastRow.eachCell((cell) => {
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFE6F0FF" },
+      };
+      cell.border = {
+        top: { style: "thin" },
+        bottom: { style: "thin" },
+      };
+    });
+
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", "attachment; filename=sales_report.xlsx");
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error("Excel Report Error:", error);
+    res.status(500).json({ message: "Server Error while generating Excel" });
+  }
 }
 
-const generatePdfReport = async (req, res)=>{
-    try {
-         const { search, sort, status, dateFilter, startDate, endDate } = req.query;
+const generatePdfReport = async (req, res) => {
+  try {
+    const { search, sort, dateFilter, startDate, endDate } = req.query;
 
-        // Build query
-        let query = buildOrderQuery({
-            search: search?.trim() || "",
-            statusFilter: status || "",
-            dateFilter,
-            startDate,
-            endDate
-        });
+    let query = buildOrderQuery({ search: search?.trim() || "", dateFilter, startDate, endDate });
 
-        if (search) {
-            const users = await User.find({
-                fullname: { $regex: search, $options: "i" }
-            }).select("_id");
-            query.userId.$in = users.map(u => u._id);
+    if (search) {
+      const users = await User.find({ fullname: { $regex: search, $options: "i" } }).select("_id");
+      query.userId.$in = users.map((u) => u._id);
+    }
+
+    let sortOption = {};
+    switch (sort) {
+      case "oldest":
+        sortOption = { createdOn: 1 };
+        break;
+      case "amountHigh":
+        sortOption = { finalAmount: -1 };
+        break;
+      case "amountLow":
+        sortOption = { finalAmount: 1 };
+        break;
+      default:
+        sortOption = { createdOn: -1 };
+    }
+
+    const orders = await Order.find(query)
+      .populate("userId")
+      .populate("items.productId")
+      .sort(sortOption)
+      .lean();
+
+    const doc = new PDFDocument({ margin: 40, size: "A4" });
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "attachment; filename=sales_report.pdf");
+    doc.pipe(res);
+
+    // --- Title ---
+    doc.fontSize(20).font("Helvetica-Bold").text("Sales Report", { align: "center" });
+    doc.moveDown(1.5);
+
+    // --- Table Config ---
+    const tableTop = 100;
+    const rowHeight = 22;
+    let yPos = tableTop;
+    doc.fontSize(9); // 🔹 slightly smaller for better fit
+
+    const headers = [
+      "Order ID", "Date", "Customer", "Product",
+      "Qty", "MRP", "Price", "Discount", "Coupon", "Net Amt"
+    ];
+
+    // 🔹 Adjusted to total ≈ 505 points (fits perfectly)
+    const columnWidths = [70, 55, 80, 90, 35, 45, 45, 45, 45, 55];
+    const totalWidth = columnWidths.reduce((a, b) => a + b, 0);
+    const leftMargin = (doc.page.width - totalWidth) / 2;
+
+    // --- Draw Header Row ---
+    let x = leftMargin;
+    headers.forEach((header, i) => {
+      doc
+        .font("Helvetica-Bold")
+        .text(header, x + 2, yPos, { width: columnWidths[i], align: "center" });
+      x += columnWidths[i];
+    });
+
+    doc.moveTo(leftMargin, yPos + rowHeight - 5).lineTo(leftMargin + totalWidth, yPos + rowHeight - 5).stroke();
+    yPos += rowHeight;
+
+    // --- Totals ---
+    let totalQty = 0, totalMRP = 0, totalDiscount = 0, totalCoupon = 0, totalNet = 0;
+
+    // --- Rows ---
+    orders.forEach((order, orderIndex) => {
+      const deliveredItems = order.items.filter((i) => i.orderStatus === "Delivered");
+      const totalDeliveredPrice = deliveredItems.reduce((sum, i) => sum + i.totalPrice, 0);
+
+      deliveredItems.forEach((item, idx) => {
+        const discountPerUnit = item.regularPrice - item.price;
+        const totalDiscountItem = discountPerUnit * item.quantity;
+        const couponShareTotal = order.couponDiscount
+          ? (item.totalPrice / totalDeliveredPrice) * order.couponDiscount
+          : 0;
+        const netAmount = item.quantity * (item.price - couponShareTotal / item.quantity);
+
+        // Alternate row background
+        if ((orderIndex + idx) % 2 === 0) {
+          doc.rect(leftMargin, yPos - 2, totalWidth, rowHeight).fill("#F9F9F9").fillColor("black");
         }
 
-        // Sorting
-        let sortOption = {};
-        switch (sort) {
-            case "oldest": sortOption = { createdOn: 1 }; break;
-            case "amountHigh": sortOption = { finalAmount: -1 }; break;
-            case "amountLow": sortOption = { finalAmount: 1 }; break;
-            default: sortOption = { createdOn: -1 };
-        }
+        const rowValues = [
+          order.orderId,
+          new Date(order.createdOn).toLocaleDateString("en-GB"),
+          order.userId?.fullname || "Guest",
+          item.productId?.productName || "N/A",
+          item.quantity,
+          item.regularPrice.toFixed(2),
+          item.price.toFixed(2),
+          totalDiscountItem.toFixed(2),
+          couponShareTotal.toFixed(2),
+          netAmount.toFixed(2),
+        ];
 
-        const orders = await Order.find(query)
-            .populate("userId")
-            .populate("items.productId")
-            .sort(sortOption)
-            .lean();
-
-        if (status) {
-            orders.forEach(order => {
-                order.items = order.items.filter(item => item.orderStatus === status);
-            });
-        }
-
-        // Create PDF
-        const doc = new PDFDocument({ margin: 10, size: "A4" });
-
-        res.setHeader("Content-Type", "application/pdf");
-        res.setHeader("Content-Disposition", "attachment; filename=sales_report.pdf");
-
-        doc.pipe(res);
-
-        // Title
-        doc.fontSize(18).text("Sales Report", { align: "center" });
-        doc.moveDown();
-
-        // Table setup
-        const tableTop = 100;
-        const rowHeight = 20;
-        let yPos = tableTop;
-
-        doc.fontSize(10);
-        const headers = ["Date", "Customer", "Product", "Qty", "Price", "Discount", "Coupon", "Total", "Payment", "Status"];
-        const columnWidths = [60, 60, 80, 30, 40, 50, 50, 50, 70, 50];
-
-        // Draw table headers
-        let x = 30;
-        headers.forEach((header, i) => {
-            doc.font("Helvetica-Bold").text(header, x, yPos, { width: columnWidths[i], align: "center" });
-            x += columnWidths[i];
+        x = leftMargin;
+        rowValues.forEach((val, i) => {
+          const isNumeric = i >= 4;
+          doc.text(val.toString(), x + (isNumeric ? 0 : 2), yPos, {
+            width: columnWidths[i] - 3,
+            align: isNumeric ? "right" : "left",
+          });
+          x += columnWidths[i];
         });
 
         yPos += rowHeight;
+        if (yPos > doc.page.height - 60) {
+          doc.addPage();
+          yPos = tableTop;
+        }
 
-        // Totals
-        let totalQty = 0;
-        let totalPrice = 0;
-        let totalDiscount = 0;
-        let totalCoupon = 0;
-        let totalSales = 0;
+        totalQty += item.quantity;
+        totalMRP += item.regularPrice * item.quantity;
+        totalDiscount += totalDiscountItem;
+        totalCoupon += couponShareTotal;
+      });
 
-        // Draw table rows
-        orders.forEach((order, orderIndex) => {
-            const totalMRP = order.items.reduce((acc, item) => acc + (item.regularPrice * item.quantity), 0);
-            const totalDiscountAmt = order.items.reduce((acc, item) => acc + ((item.regularPrice - item.price) * item.quantity), 0);
-            const totalSalePrice = totalMRP - totalDiscountAmt;
-            const couponDiscountTotal = order.couponDiscount || 0;
+      totalNet += order.finalAmount || 0;
+    });
 
-            order.items.forEach((item, itemIndex) => {
-                const itemDiscount = (item.regularPrice - item.price) * item.quantity;
-                let itemCouponShare = 0;
-                if (couponDiscountTotal > 0 && totalSalePrice > 0) {
-                    itemCouponShare = (item.price * item.quantity / totalSalePrice) * couponDiscountTotal;
-                }
+    // --- Totals Row ---
+    yPos += 5;
+    doc.moveTo(leftMargin, yPos).lineTo(leftMargin + totalWidth, yPos).stroke();
+    yPos += 5;
 
-                // Alternating row colors
-                if ((orderIndex + itemIndex) % 2 === 0) {
-                    doc.rect(30, yPos, 550, rowHeight).fill("#F3F3F3").fillColor("black");
-                }
+    const totalValues = [
+      "TOTAL", "", "", "", totalQty,
+      totalMRP.toFixed(2), "", totalDiscount.toFixed(2),
+      totalCoupon.toFixed(2), totalNet.toFixed(2)
+    ];
 
-                x = 30;
-                const rowValues = [
-                    new Date(order.createdOn).toLocaleDateString(),
-                    order.userId?.fullname || "Guest",
-                    item.productId?.productName || "N/A",
-                    item.quantity,
-                    item.price.toFixed(2),
-                    itemDiscount.toFixed(2),
-                    itemCouponShare.toFixed(2),
-                    item.totalPrice.toFixed(2),
-                    order.paymentMethod,
-                    item.orderStatus
-                ];
+    x = leftMargin;
+    totalValues.forEach((val, i) => {
+      const isNumeric = i >= 4;
+      doc.font("Helvetica-Bold").text(val.toString(), x + (isNumeric ? 0 : 2), yPos, {
+        width: columnWidths[i] - 3,
+        align: isNumeric ? "right" : "left",
+      });
+      x += columnWidths[i];
+    });
 
-                rowValues.forEach((val, i) => {
-                    const numericColumns = [3, 4, 5, 6, 7]; // Qty, Price, Discount, Coupon, Total
-                    doc.text(val.toString(), x, yPos + 5, { width: columnWidths[i], align: numericColumns.includes(i) ? "right" : "left" });
-                    x += columnWidths[i];
-                });
+    doc.end();
+  } catch (error) {
+    console.error("PDF Report Error:", error);
+    res.redirect("/pageNotFound");
+  }
+};
 
-                yPos += rowHeight;
 
-                // Add new page if exceeded
-                if (yPos > doc.page.height - 50) {
-                    doc.addPage();
-                    yPos = tableTop;
-                }
 
-                totalQty += item.quantity;
-                totalPrice += item.price * item.quantity;
-                totalDiscount += itemDiscount;
-                totalCoupon += itemCouponShare;
-                totalSales += item.totalPrice;
-            });
-        });
 
-        // Totals row
-        yPos += 10; // spacing
-        doc.font("Helvetica-Bold");
-        x = 30;
-        const totalValues = ["TOTAL", "", "", totalQty, totalPrice.toFixed(2), totalDiscount.toFixed(2), totalCoupon.toFixed(2), totalSales.toFixed(2), "", ""];
-        const numericColumns = [3, 4, 5, 6, 7];
-
-        totalValues.forEach((val, i) => {
-            doc.text(val.toString(), x, yPos + 5, { width: columnWidths[i], align: numericColumns.includes(i) ? "right" : "left" });
-            x += columnWidths[i];
-        });
-
-        // Horizontal line above totals
-        doc.moveTo(30, yPos - 2).lineTo(580, yPos - 2).stroke();
-
-        doc.end();
-
-    } catch (error) {
-        console.error("PDF Report Error:", err);
-        res.redirect("/pageNotFound");
-    }
-}
-
-function buildOrderQuery({ search, statusFilter, dateFilter, startDate, endDate }) {
+function buildOrderQuery({ search, dateFilter, startDate, endDate }) {
     const query = {};
 
     if (search) {
-        query.userId = {
-            $in: []
-        };
+        query.userId = { $in: [] };
     }
 
-    if (statusFilter) {
-        query["items"] = { $elemMatch: { orderStatus: statusFilter } };
-    }
+    query["items"] = { $elemMatch: { orderStatus: "Delivered" } };
 
     if (dateFilter) {
         let start, end;
@@ -751,6 +695,7 @@ function buildOrderQuery({ search, statusFilter, dateFilter, startDate, endDate 
                 end = new Date(today);
                 end.setHours(23, 59, 59, 999);
                 break;
+
             case "week":
                 const dayOfWeek = today.getDay();
                 const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
@@ -759,10 +704,12 @@ function buildOrderQuery({ search, statusFilter, dateFilter, startDate, endDate 
                 end = new Date(today);
                 end.setHours(23, 59, 59, 999);
                 break;
+
             case "year":
                 start = new Date(today.getFullYear(), 0, 1);
                 end = new Date(today.getFullYear(), 11, 31, 23, 59, 59, 999);
                 break;
+
             case "custom":
                 if (startDate && endDate) {
                     start = new Date(startDate);
@@ -781,10 +728,11 @@ function buildOrderQuery({ search, statusFilter, dateFilter, startDate, endDate 
     return query;
 }
 
+
 const loadSalesReport = async (req, res)=>{
     try {
     let page = parseInt(req.query.page) || 1
-    const limit = 4
+    const limit = 8
     let skip = (page - 1) * limit
     const search = req.query.search ? req.query.search.trim() : ""
     const sort = req.query.sort || "newest"
@@ -866,47 +814,60 @@ const orderData = await Order.find(query)
     .skip(skip)
     .limit(limit)
     .lean()
+let totalQuantity = 0
+let totalMRP = 0
+let totalDiscount = 0
+let totalCoupon = 0
+let totalNetAmount = 0
 
-    orderData.forEach(order => {
+orderData.forEach(order => {
   order.items = order.items.filter(item => item.orderStatus === "Delivered");
 
   const totalDeliveredPrice = order.items.reduce((sum, item) => sum + item.totalPrice, 0)
 
   order.items = order.items.map(item => {
     const discountPerUnit = item.regularPrice - item.price;
-    // const totalDiscount = discountPerUnit * item.quantity;
+    const totalDiscountValue = discountPerUnit * item.quantity;
 
     const couponShareTotal = order.couponDiscount ? (item.totalPrice / totalDeliveredPrice) * order.couponDiscount : 0
 
     const couponSharePerUnit = couponShareTotal / item.quantity;
 
-    const netAmount =
-      item.quantity * (item.price - couponSharePerUnit);
+    const netAmount = item.quantity * (item.price - couponSharePerUnit);
+
+    totalQuantity += item.quantity;
+    totalMRP += item.regularPrice * item.quantity;
+    totalDiscount += totalDiscountValue;
+    totalCoupon += couponShareTotal;
+    totalNetAmount += netAmount;
 
     return {
       ...item,
       discountPerUnit,
-    //   totalDiscount: totalDiscount.toFixed(2),
-    //   couponShareTotal: couponShareTotal.toFixed(2),
+        totalDiscount: totalDiscountValue.toFixed(2),
+        couponShareTotal: couponShareTotal.toFixed(2),
       couponSharePerUnit: couponSharePerUnit.toFixed(2),
       netAmount: netAmount.toFixed(2)
     }
   })
 })
 
-    
-
 const count = await Order.countDocuments(query)
 
 res.render("admin/salesReport", {
     orderData,
+    totalQuantity,
+    totalMRP: totalMRP.toFixed(2),
+    totalDiscount: totalDiscount.toFixed(2),
+    totalCoupon: totalCoupon.toFixed(2),
+    totalNetAmount: totalNetAmount.toFixed(2),
     currentPage: page,
     totalPages: Math.ceil(count / limit),
     search,
     sort,
     dateFilter,
     startDate,
-    endDate
+    endDate,
 })
         
     } catch (error) {

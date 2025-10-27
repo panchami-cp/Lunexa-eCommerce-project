@@ -85,6 +85,7 @@ router.post('/verify_payment', userAuth, orderController.verifyPayment)
 router.get('/payment_failure', userAuth, orderController.paymentFail)
 router.post('/cancel_all', userAuth, orderController.cancelAllOrder)
 router.post('/return_all', userAuth, orderController.returnAllOrder)
+router.post('/retry_payment', userAuth, orderController.retryPayment)
 
 
 module.exports = router

@@ -93,6 +93,11 @@ const orderSchema = new Schema({
             enum:['cashOnDelivery', 'razorpay', 'wallet'],
             required: true
         },
+        paymentStatus: {
+            type: String,
+            enum: ['Pending', 'Success', 'Failed'],
+            default: 'Success'
+        },
         address:{
            name:{
             type: String,

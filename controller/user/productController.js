@@ -280,6 +280,8 @@ const loadcart = async (req, res)=>{
       productImage: product.productImage[0],
       price: item.price,
       totalPrice: item.totalPrice,
+      regularPrice: item.regularPrice,
+      totalRegularPrice: item.totalRegularPrice,
       quantity: item.quantity,
       size: product.sizeVariant,
       selectedSize: item.size,

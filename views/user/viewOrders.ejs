@@ -71,22 +71,42 @@
                 <% }) %>
             </div>
           </div>
-          <%if(order.items.every(item=> item.orderStatus === 'Placed')){%>
-          <a href="#" 
-          class="btn btn-outline-danger position-absolute top-0 end-0 m-2" 
-          id="cancelAllButton" 
-          data-id="<%=order._id%>">Cancel all</a>
-          <%}%>
-          <%
-            const allDelivered = order.items.every(item => item.orderStatus === 'Delivered');
-            const noReturns = order.items.every(item => item.returnRequest.status === null);
-          %>
-          <%if(allDelivered && noReturns){%>
-            <a href="#" 
-          class="btn btn-outline-warning position-absolute top-0 end-0 m-2" 
-          id="returnAllButton" 
-          data-id="<%=order._id%>">Return All</a>
-          <%}%>
+          
+       <% if(order.paymentStatus === 'Pending' || order.paymentStatus === 'Failed'){ %>
+  <!-- Retry Payment Button -->
+  <a href="#" 
+     class="btn btn-outline-primary position-absolute top-0 end-0 m-4" 
+     id="retryPaymentButton" 
+     data-id="<%=order._id%>">
+    Retry Payment
+  </a>
+<% } else if(order.paymentStatus === 'Success'){ %>
+  <!-- Cancel All Button -->
+  <% if(order.items.every(item => item.orderStatus === 'Placed')){ %>
+    <a href="#" 
+       class="btn btn-outline-danger position-absolute top-0 end-0 m-4" 
+       id="cancelAllButton" 
+       data-id="<%=order._id%>">
+      Cancel All
+    </a>
+  <% } %>
+
+  <!-- Return All Button -->
+  <%
+    const allDelivered = order.items.every(item => item.orderStatus === 'Delivered');
+    const noReturns = order.items.every(item => !item.returnRequest?.status);
+  %>
+  <% if(allDelivered && noReturns){ %>
+    <a href="#" 
+       class="btn btn-outline-warning position-absolute top-0 end-0 m-4" 
+       id="returnAllButton" 
+       data-id="<%=order._id%>">
+      Return All
+    </a>
+  <% } %>
+<% } %>
+
+
         </div>
 
       </div>
@@ -175,7 +195,7 @@ document.getElementById('confirmNo').addEventListener('click', function(){
   document.getElementById('cancelAllConfirmModal').style.display = 'none'
 })
 </script>
-
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <!-- return all modal -->
  <script>
   document.addEventListener('DOMContentLoaded', () => {
@@ -215,7 +235,6 @@ document.getElementById('confirmNo').addEventListener('click', function(){
         const data = await response.json();
         if (data.success) {
           returnAllModal.hide()
-          // You can refresh page or show a success message
           window.location.reload()
         } else {
           alert(data.message || 'Something went wrong!')
@@ -226,6 +245,69 @@ document.getElementById('confirmNo').addEventListener('click', function(){
       }
     })
   })
+  
+//retry payment
+  document.querySelectorAll("#retryPaymentButton").forEach(button => {
+  button.addEventListener("click", async function () {
+    const orderId = this.dataset.id;
+
+    try {
+      const res = await fetch("/retry_payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId }),
+      });
+
+      const data = await res.json();
+      if (!data.success) {
+        alert(data.message || "Cannot retry payment");
+        return;
+      }
+
+      const options = {
+        key: data.key_id,
+        amount: data.amount,
+        currency: "INR",
+        order_id: data.razorpayOrderId,
+        name: "Lunexa Fashion",
+        description: "Order Payment",
+        handler: async function (response) {
+          const verifyRes = await fetch("/verify_payment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              retry: true, 
+            }),
+          });
+
+          const verifyData = await verifyRes.json();
+          if (verifyData.success) {
+            window.location.href = verifyData.redirectUrl;
+          } else {
+            window.location.href = verifyData.redirectUrl || "/payment_failure";
+          }
+        },
+        prefill: { name: "", email: "", contact: "" },
+        theme: { color: "#3399cc" },
+      };
+
+      const rzp = new Razorpay(options);
+      rzp.on("payment.failed", function (response) {
+        console.error("Payment failed", response.error);
+        alert("Payment failed. Try again.");
+      });
+      rzp.open();
+
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong. Try again.");
+    }
+  });
+});
+
 </script>
 
   <!-- Footer -->

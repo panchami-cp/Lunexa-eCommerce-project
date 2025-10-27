@@ -63,7 +63,10 @@
                         </div>
 
                         <!-- Price -->
-                        <p class="text-danger fw-bold mb-0">₹ <%= item.price%>
+                        <p class="text-danger fw-bold mb-0">₹<%= item.price%>
+                          <%if(item.price !== item.regularPrice){%>
+                            <strike class="text-secondary fw-normal">₹<%=item.regularPrice%></strike>
+                            <%}%>
                         </p>
                       </div>
 

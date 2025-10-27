@@ -171,8 +171,6 @@
 </div>
 </div>
 
-
-
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <%- include("../../views/partials/admin/footer") %>
@@ -182,49 +180,5 @@
         document.getElementById("searchInput").value = ""
         document.getElementById('searchForm').submit()
     }
-
-    //custome date
-     const dateFilter = document.getElementById('dateFilter')
-    const customDateModal = new bootstrap.Modal(document.getElementById('customDateModal'))
-    const applyCustomDateBtn = document.getElementById('applyCustomDate')
-    const hiddenStart = document.getElementById('hiddenStartDate')
-    const hiddenEnd = document.getElementById('hiddenEndDate')
-    const searchForm = document.getElementById('searchForm')
-
-    dateFilter.addEventListener('change', () => {
-        if (dateFilter.value === 'custom') {
-            customDateModal.show()
-        }
-    })
-
-    applyCustomDateBtn.addEventListener('click', () => {
-        const start = document.getElementById('startDate').value
-        const end = document.getElementById('endDate').value
-
-        if (!start || !end) {
-            alert('Please select both start and end dates.')
-            return
-        }
-
-        hiddenStart.value = start
-        hiddenEnd.value = end
-
-        customDateModal.hide()
-        searchForm.submit()
-    })
-// pass filters to url
-     document.addEventListener('DOMContentLoaded', () => {
-    const queryString = new URLSearchParams(window.location.search).toString();
-
-    document.getElementById('downloadPdf').addEventListener('click', (e) => {
-      e.preventDefault();
-      window.location.href = `/admin/orders/report/pdf?${queryString}`;
-    });
-
-    document.getElementById('downloadExcel').addEventListener('click', (e) => {
-      e.preventDefault();
-      window.location.href = `/admin/orders/report/excel?${queryString}`;
-    });
-  });
 </script>
 
