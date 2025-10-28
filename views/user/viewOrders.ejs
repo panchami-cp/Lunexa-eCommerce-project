@@ -71,6 +71,9 @@
                 <% }) %>
             </div>
           </div>
+           <%if(order.paymentStatus && order.paymentStatus === 'Pending' || order.paymentStatus === 'Failed'){%>
+            <p class="badge bg-danger mb-0 mt-4">Your order has been placed, but payment is pending. Please complete the payment to confirm your order</p>
+            <%}%>
           
        <% if(order.paymentStatus === 'Pending' || order.paymentStatus === 'Failed'){ %>
   <!-- Retry Payment Button -->

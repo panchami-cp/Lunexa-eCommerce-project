@@ -20,7 +20,11 @@
 
       <!-- Right side: Delivery info -->
       <div class="col-md-4 text-md-end text-start">
-        <p><strong>Delivery Date:</strong> <%= new Date(item.deliveryDate).toLocaleDateString("en-GB") %></p>
+        <p><strong>Delivery Date:</strong> 
+          <%if(item.deliveryDate){%>
+          <span><%= new Date(item.deliveryDate).toLocaleDateString("en-GB") %></span>
+          <%}else{%>
+            <span>Expect your delivery within one week</span><%}%></p>
         <% if (["Placed", "Processing", "Shipped", "Out for delivery", "Delivered"].includes(item.orderStatus)) { %>
           <a href="/download_invoice?id=<%= order._id %>" class="btn btn-outline-secondary btn-sm">Download Invoice</a>
         <% } %>
