@@ -14,8 +14,10 @@ const { route } = require('./userRoutes')
 //admin controller
 router.get('/login',adminController.loadLogin)
 router.post('/login', adminController.login)
-router.get('/',adminAuth,adminController.loadDashboard)
+router.get('/',adminAuth,adminController.renderDashboard)
+router.get('/dashboardData',adminAuth, adminController.dashboardData)
 router.get('/logout', adminAuth, adminController.logout)
+
 
 //customer controller
 router.get('/users', adminAuth, customerController.customerInfo)

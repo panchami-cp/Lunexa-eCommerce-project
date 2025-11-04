@@ -209,7 +209,7 @@
 
           const data = await response.json();
 
-          if (response.ok) {
+          if (data.success) {
 
             showPopup(data.message || "Added to cart", "success")
             
@@ -237,7 +237,7 @@
     popup.style.borderRadius = '5px'
     popup.style.color = '#fff'
     popup.style.zIndex = '9999'
-    popup.style.backgroundColor = '#000'
+    popup.style.backgroundColor = type === 'error'? '#a80810':'#000'
     popup.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)'
     document.body.appendChild(popup)
 

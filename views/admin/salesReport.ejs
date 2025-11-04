@@ -229,14 +229,35 @@
     })
 
     applyCustomDateBtn.addEventListener('click', () => {
-        const start = document.getElementById('startDate').value
-        const end = document.getElementById('endDate').value
+        const start = new Date(document.getElementById('startDate').value) 
+        const end = new Date(document.getElementById('endDate').value) 
 
         if (!start || !end) {
-            alert('Please select both start and end dates.')
+          Swal.fire({
+            icon: 'error',
+            title: "Error",
+            text: 'Please select both start and end dates.'
+          })
             return
         }
-
+         const today = new Date()
+         today.setHours(0,0,0,0)
+        if(start > today || end > today){
+          Swal.fire({
+            icon: 'error',
+            title: "Error",
+            text: 'Invalid dates. The date is in future'
+          })
+          return
+        }
+        if(end < start){
+           Swal.fire({
+            icon: 'error',
+            title: "Error",
+            text: 'Invalid end date'
+          })
+          return
+        }
         hiddenStart.value = start
         hiddenEnd.value = end
 
@@ -245,17 +266,76 @@
     })
 // pass filters to url
      document.addEventListener('DOMContentLoaded', () => {
-    const queryString = new URLSearchParams(window.location.search).toString();
+  const queryString = new URLSearchParams(window.location.search).toString();
 
-    document.getElementById('downloadPdf').addEventListener('click', (e) => {
-      e.preventDefault();
-      window.location.href = `/admin/sales_report/pdf?${queryString}`;
-    });
+  document.getElementById('downloadExcel').addEventListener('click', async (e) => {
+    e.preventDefault();
+//excel file download
+    try {
+      const res = await fetch(`/admin/sales_report/excel?${queryString}`);
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = await res.json();
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: data.message || 'No data available',
+        });
+        return;
+      }
 
-    document.getElementById('downloadExcel').addEventListener('click', (e) => {
-      e.preventDefault();
-      window.location.href = `/admin/sales_report/excel?${queryString}`;
-    });
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'sales_report.xlsx';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Failed to download Excel report.',
+      });
+    }
   });
+
+  //pdf file download
+  document.getElementById('downloadPdf').addEventListener('click', async (e) => {
+    e.preventDefault();
+
+    try {
+      const res = await fetch(`/admin/sales_report/pdf?${queryString}`);
+
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = await res.json();
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: data.message || 'No data available',
+        });
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'sales_report.pdf';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Failed to download PDF report.',
+      });
+    }
+  });
+});
+
 </script>
 

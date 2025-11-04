@@ -17,7 +17,7 @@ const listOrders = async (req, res)=>{
     const sort = req.query.sort || "newest"
     const statusFilter = req.query.status || ""
     
-    let query = {}
+    let query = {paymentStatus: {$nin:['Failed', 'Pending']}}
 
     if (search) {
         const users = await User.find({
@@ -95,7 +95,6 @@ const viewOrder = async (req, res)=>{
         }
 
         res.render('admin/orderDetails',{
-
             orderData: orderData,
             orderStatus,
             address: orderData.address
@@ -118,25 +117,26 @@ const changeStatus = async (req, res)=>{
         const deliveryDate = req.body.deliveryDate
         const itemId = req.body.itemId
 
-        console.log(deliveryDate)
-
     const order = await Order.findById(orderObjId)
-
     if(!order){
         return res.json({success: false})
     }
 
     const item = order.items.find(item=> item._id.toString() === itemId.toString())
-
     if(!item){
+        return res.json({success: false, message: "Item not found"})
+    }
 
-        return res.redirect('/pageNotFound')
+    const currentStatus = item.orderStatus
+    console.log(currentStatus)
 
+    if(["Delivered", "Returned", "Cancelled"].includes(currentStatus)){
+        return res.json({success: false, message: "Cannot update status"})
     }
 
     await Order.updateOne({"items._id": itemId}, {$set:{"items.$.orderStatus": status, "items.$.deliveryDate": deliveryDate}})
 
-    res.json({success: true})
+    res.json({success: true, message: "Order status updated"})
         
     } catch (error) {
 
@@ -316,7 +316,9 @@ const refund = async (req, res)=>{
 
         wallet.transactions.push({
             type: 'credit',
-            amount: refundAmount
+            amount: refundAmount,
+            description: 'order returned',
+            orderId: order.orderId
         })
 
         
@@ -417,7 +419,7 @@ const generateExcelReport = async (req, res) => {
       .lean();
 
     if (!orders.length) {
-      return res.status(404).json({ message: "No orders found" });
+      return res.status(404).json({success: false, message: "No orders found" });
     }
 
     const workbook = new ExcelJS.Workbook();
@@ -512,7 +514,7 @@ const generateExcelReport = async (req, res) => {
     res.end();
   } catch (error) {
     console.error("Excel Report Error:", error);
-    res.status(500).json({ message: "Server Error while generating Excel" });
+    res.status(500).json({success: false, message: "Server Error while generating Excel" });
   }
 }
 
@@ -547,6 +549,10 @@ const generatePdfReport = async (req, res) => {
       .populate("items.productId")
       .sort(sortOption)
       .lean();
+
+     if (!orders.length) {
+      return res.status(404).json({success: false, message: "No orders found" });
+    }  
 
     const doc = new PDFDocument({ margin: 40, size: "A4" });
     res.setHeader("Content-Type", "application/pdf");
@@ -668,7 +674,7 @@ const generatePdfReport = async (req, res) => {
     doc.end();
   } catch (error) {
     console.error("PDF Report Error:", error);
-    res.redirect("/pageNotFound");
+    res.json({success: false, redirectUrl: '/pageNotFound'})
   }
 };
 

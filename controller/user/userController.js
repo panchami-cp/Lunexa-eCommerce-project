@@ -267,7 +267,9 @@ const otpVerification = async (req,res)=>{
                 refWallet.balance += referrerReward
                 refWallet.transactions.push({
                     type: "credit",
-                    amount: referrerReward
+                    amount: referrerReward,
+                    description: 'referral bonus',
+
                 })
 
                 await refWallet.save()
@@ -277,7 +279,8 @@ const otpVerification = async (req,res)=>{
                     balance: 50,
                     transactions: [{
                         type: 'credit',
-                        amount: 50
+                        amount: 50,
+                        description: 'referral bonus'
                     }]
                 })
 

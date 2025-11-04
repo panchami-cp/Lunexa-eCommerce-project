@@ -469,7 +469,7 @@ const loadEditProfile = async (req, res)=>{
 
         console.error("Error in loading profile edit page: ", error)
 
-        res.redirect('pageNotFound')
+        res.redirect('/pageNotFound')
     }
 }
 
@@ -497,8 +497,6 @@ const editProfile = async (req,res)=>{
 
        res.redirect('/profile')
 
-       
-        
     } catch (error) {
 
         console.error("Error in edit address: ", error)
@@ -708,14 +706,7 @@ const newEmail = async(req,res)=>{
 
             res.render('user/newEmail',{message:"Failed to send OTP, Please try again"})
         }
-            
-        // await User.updateOne({_id: userId},{$set:{email:newEmail}})
-
-        // res.render('user/newEmail',{message: "New email updated", user: userData})
-        
-        
-
-       
+    
     } catch (error) {
 
         console.error("Errorn in update  new email: ", error)
@@ -739,23 +730,18 @@ const wallet = async(req, res)=>{
         let wallet = await Wallet.findOne({userId: userId})
 
         if(!wallet){
-
             wallet = {
                 balance : 0,
                 transactions: []
             }
-           
-
         }
 
         res.render('user/wallet',{
-
             wallet 
-
         })
         
     } catch (error) {
-        
+        console.error("Error in loading wallet: ", error)
     }
 }
 

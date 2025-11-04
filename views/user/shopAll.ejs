@@ -129,7 +129,7 @@
           <% } %>
         </div>
       </div>
-     
+     <!-- pagination -->
       <div class="pagination d-flex justify-content-center mt-4">
         <% if (currentPage > 1) { %>
           <a href="#" onclick="return goToPage(event, '<%= currentPage - 1 %>')" class="btn btn-outline-secondary mx-1">&laquo; Previous</a>
@@ -247,7 +247,8 @@
             showPopup(data.message || "Removed from wishlist", "success");
           }
         } else {
-          showPopup(data.message || "Something went wrong", "error");
+          // showPopup(data.message || "Something went wrong", "error");
+          window.location.href = redirectUrl
         }
       } catch (err) {
         console.error("Wishlist error:", err);

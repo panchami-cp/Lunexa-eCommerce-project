@@ -87,5 +87,23 @@ router.post('/cancel_all', userAuth, orderController.cancelAllOrder)
 router.post('/return_all', userAuth, orderController.returnAllOrder)
 router.post('/retry_payment', userAuth, orderController.retryPayment)
 
+//page not found
+router.get('/pageNotFound', (req, res)=>{
+    try {
+        res.render('user/pageNotfound')
+    } catch (error) {
+        console.error(error)
+    }
+})
+
+//user not found
+router.get('/userNotFound', (req, res)=>{
+    try {
+        res.render('user/userNotFound')
+    } catch (error) {
+        console.error(error)
+    }
+})
+
 
 module.exports = router

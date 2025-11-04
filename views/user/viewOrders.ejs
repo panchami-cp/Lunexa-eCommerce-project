@@ -114,6 +114,25 @@
 
       </div>
       <% }) %>
+      
+      <!-- pagination -->
+       <div class="pagination d-flex justify-content-center mt-4">
+  <% if (currentPage > 1) { %>
+    <a href="/orders?page=<%= currentPage - 1 %>" class="btn btn-outline-secondary mx-1">&laquo; Previous</a>
+  <% } %>
+
+  <% for (let i = 1; i <= totalPages; i++) { %>
+    <% if (i === currentPage) { %>
+      <span class="btn  mx-1"><%= i %></span>
+    <% } else { %>
+      <a href="/orders?page=<%= i %>" class="btn btn-outline-secondary mx-1"><%= i %></a>
+    <% } %>
+  <% } %>
+
+  <% if (currentPage < totalPages) { %>
+    <a href="/orders?page=<%= currentPage + 1 %>" class="btn btn-outline-secondary mx-1">Next &raquo;</a>
+  <% } %>
+</div>
   </div>
 
   <!-- return all confirmation modal -->
@@ -263,7 +282,7 @@ document.getElementById('confirmNo').addEventListener('click', function(){
 
       const data = await res.json();
       if (!data.success) {
-        alert(data.message || "Cannot retry payment");
+        showPopup(data.message, 'error')
         return;
       }
 
@@ -310,6 +329,26 @@ document.getElementById('confirmNo').addEventListener('click', function(){
     }
   });
 });
+
+// popup
+  function showPopup(message, type) {
+    const popup = document.createElement('div')
+    popup.textContent = message
+    popup.style.position = 'fixed'
+    popup.style.top = '20px'
+    popup.style.left = '20px'
+    popup.style.padding = '12px 20px'
+    popup.style.borderRadius = '5px'
+    popup.style.color = '#fff'
+    popup.style.zIndex = '9999'
+    popup.style.backgroundColor = type === 'error'? '#b30f04' : '#000'
+    popup.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)'
+    document.body.appendChild(popup)
+
+    setTimeout(() => {
+      popup.remove()
+    }, 6000)
+  }
 
 </script>
 

@@ -44,7 +44,7 @@ try {
     const userId = req.session.user
 
 const userData = await User.findById(userId);
-if (!userData) return res.status(400).json({ success: false, message: "User not found" })
+if (!userData) return res.status(400).json({ success: false, redirectUrl: '/userNotFound'})
 
 let wishlist = await Wishlist.findOne({ userId });
 
@@ -162,19 +162,19 @@ const addToCart = async (req, res) => {
     const {selectedSize, productId} = req.body;
 
     if (!productId) {
-      return res.status(400).json({ message: "Cannot find product" });
+      return res.status(400).json({success: false, message: "Cannot find product" });
     }
 
     const product = await Product.findById(productId);
 
     if (!product || product.isBlocked || product.totalQuantity === 0) {
-      return res.status(400).json({ message: "This product is unavailable." });
+      return res.status(400).json({success: false, message: "This product is unavailable." });
     }
 
     const category = await Category.findOne({ _id: product.category });
 
     if (!category || !category.isListed) {
-      return res.status(400).json({ message: "This category is currently unavailable." });
+      return res.status(400).json({success: false, message: "This category is currently unavailable." });
     }
 
     const price = product.salePrice;
@@ -208,11 +208,13 @@ const addToCart = async (req, res) => {
       if (existingItem) {
 
         if (existingItem.quantity >= maxProduct) {
-
-          return res.status(400).json({ message: "Reached limit" });
-
+          return res.status(400).json({success: false, message: "Reached limit" });
         }
-
+        const productSize = product.sizeVariant.find(variant => variant.size === selectedSize)
+        const sizeQuantity = productSize.quantity
+        if(existingItem.quantity >= sizeQuantity){
+          return res.status(400).json({success: false, message: `Only ${sizeQuantity} items left`})
+        }
         existingItem.quantity += 1;
         existingItem.totalPrice = existingItem.price * existingItem.quantity
         existingItem.totalRegularPrice = existingItem.regularPrice * existingItem.quantity
@@ -239,7 +241,7 @@ const addToCart = async (req, res) => {
       
       {$pull:{products:{productId:productId}}})
 
-    return res.status(200).json({ message: "Added to cart" });
+    return res.status(200).json({success: true, message: "Added to cart" });
 
   } catch (error) {
 

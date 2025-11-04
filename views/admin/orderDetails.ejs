@@ -7,7 +7,7 @@
     <div class="order-details-container">
 
         <!-- Order Summary -->
-        <div class="box shadow-sm p-3 mb-5 bg-body rounded">
+        <div class="box shadow-sm p-3 mb-3 bg-body rounded">
             <h3>Order Summary</h3>
             <div class="detail-row">
                 <span class="label">Order ID:</span>
@@ -25,7 +25,6 @@
                     <%=orderData.paymentMethod%>
                 </span>
             </div>
-            <div id="errorMessage" class="fw-light text-danger"></div>
         </div>
 
        <% orderData.items.forEach((item) => { %>
@@ -57,7 +56,11 @@
     <input type="hidden" name="itemId" class="itemId" value="<%= item._id %>">
 
     <label><strong>Delivery Date:</strong></label>
-    <input type="date" class="form-control form-control-sm deliveryDate">
+    <input 
+    type="date" 
+    class="form-control form-control-sm deliveryDate" 
+    value="<%= item.deliveryDate ? new Date(item.deliveryDate).toLocaleDateString('en-CA') : '' %>"
+    >
 
     <label><strong>Status:</strong></label>
     <select name="orderStatus" class="form-select form-select-sm orderStatus">
@@ -65,7 +68,7 @@
         <option value="<%= status %>" <%= status === item.orderStatus ? 'selected' : '' %>><%= status %></option>
       <% }) %>
     </select>
-
+    <div id="errorMessage" class="fw-light text-danger"></div>
     <button type="submit" class="btn btn-secondary btn-sm mt-2">Update</button>
   </form>
 </div>
@@ -108,7 +111,7 @@
 
   </div>
 <% }) %>
-<div class="mb-5">
+<div class="mb-3">
     <%if(orderData.items.every(item=> item.returnRequest.status === 'Pending')){%>
     <a href="/admin/approve_all?id=<%=orderData._id%>" class="btn btn-success">Approve All Return Requests</a>
     <a href="/admin/reject_all?id=<%=orderData._id%>" class="btn btn-danger">Reject All Return Requests</a>
@@ -187,9 +190,19 @@
 
           const data = await res.json();
           if (data.success) {
-            window.location.reload();
+            Swal.fire({
+              icon: 'success',
+              title: "success",
+              text: data.message
+            })
+            // window.location.reload();
           } else {
-            window.location.href = '/admin/pageNotFound';
+            Swal.fire({
+              icon: "error",
+              title: "Error",
+              text: data.message
+            })
+            // window.location.href = '/admin/pageNotFound';
           }
         } catch (err) {
           window.location.href = '/admin/pageNotFound';

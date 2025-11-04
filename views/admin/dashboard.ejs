@@ -1,10 +1,280 @@
 <%- include("../../views/partials/admin/header") %>
+<head>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background-color: #f8f9fa;
+      font-family: 'Poppins', sans-serif;
+    }
+    .card {
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .summary-card h5 { font-size: 0.95rem; color: #555; }
+    .summary-card h3 { font-weight: 600; }
+    .filter-section {
+      background: white;
+      border-radius: 15px;
+      padding: 15px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .table-section {
+      background: white;
+      border-radius: 15px;
+      padding: 15px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+
 <section class="content-main">
-    <div class="content-header">
-        <div>
-            <h2 class="content-title card-title">Dashboard </h2>
+  <div class="content-header">
+    <h2 class="content-title card-title">Dashboard</h2>
+  </div>
+
+  <div class="container my-4">
+
+    <!-- summery cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-3">
+        <div class="card p-3 summary-card text-center">
+          <h5>Total Customers</h5>
+          <h3 id="totalCustomers">0</h3>
         </div>
-       
+      </div>
+      <div class="col-md-3">
+        <div class="card p-3 summary-card text-center">
+          <h5>Total Revenue</h5>
+          <h3 id="totalRevenue">₹0</h3>
+        </div>
+      </div>
+       <div class="col-md-3">
+        <div class="card p-3 summary-card text-center">
+          <h5>Total Sales</h5>
+          <h3 id="totalSales">0</h3>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card p-3 summary-card text-center">
+          <h5>Total Orders</h5>
+          <h3 id="totalOrders">0</h3>
+        </div>
+      </div>
     </div>
+
+    <!-- date filter -->
+    <div class="filter-section mb-4">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <div class="btn-group" role="group">
+            <button class="btn btn-outline-primary filter-btn" data-filter="today">Today</button>
+            <button class="btn btn-outline-primary filter-btn" data-filter="weekly">Weekly</button>
+            <button class="btn btn-outline-primary filter-btn" data-filter="monthly">Monthly</button>
+            <button class="btn btn-outline-primary filter-btn" data-filter="yearly">Yearly</button>
+          </div>
+        </div>
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+          <label class="form-label mb-0 me-2">Custom Date:</label>
+          <input type="date" id="fromDate" class="form-control d-inline-block w-auto">
+          <input type="date" id="toDate" class="form-control d-inline-block w-auto">
+          <button id="applyCustomFilter" class="btn btn-primary btn-sm ms-2">Apply</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- charts -->
+    <div class="row g-4 mb-4">
+      <div class="col-md-6">
+        <div class="card p-3">
+          <h5 class="mb-3 text-center">Top Selling Products</h5>
+          <canvas id="topProductsChart" height="250"></canvas>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card p-3">
+          <h5 class="mb-3 text-center">Top Selling Categories</h5>
+          <canvas id="topCategoriesChart" height="250"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- order listing -->
+    <div class="table-section mb-5">
+      <h5 class="mb-3 text-center">Order Summary</h5>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Date</th>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Product</th>
+              <th>MRP</th>
+              <th>Discount</th>
+              <th>Coupon Share</th>
+              <th>Net Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="orderTableBody">
+            <tr><td colspan="9" class="text-center text-muted">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
 </section>
+
+<script>
+  let topProductsChart, topCategoriesChart;
+
+  async function loadDashboardData(filter = "today", fromDate = "", toDate = "") {
+    let url = `/admin/dashboardData?filter=${filter}`
+    if (filter === "custom" && fromDate && toDate) {
+      url += `&fromDate=${fromDate}&toDate=${toDate}`
+    }
+
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+
+      //summery cards
+      document.getElementById("totalCustomers").textContent = data.summary.totalCustomers;
+      document.getElementById("totalRevenue").textContent = "₹" + data.summary.totalRevenueAmount.toLocaleString();
+      document.getElementById("totalOrders").textContent = data.summary.totalOrders;
+      document.getElementById("totalSales").textContent = data.summary.totalSales
+
+      // charts
+      updateCharts(data.topProducts, data.topCategories);
+      console.log(data.topProducts)
+
+      // table
+      updateOrderTable(data.orders);
+    } catch (err) {
+      console.error("Error loading dashboard:", err);
+    }
+  }
+
+  // charts
+  function updateCharts(products, categories) {
+    const productLabels = products.map(p => p.productName || "Unnamed Product")
+    const productData = products.map(p => p.sold ?? 0);
+    const maxSold = Math.max(...productData)
+    const step = Math.ceil(maxSold / 5)
+
+    const categoryLabels = categories.map(c => c.category);
+    const categoryData = categories.map(c => c.sold);
+
+    if (topProductsChart) topProductsChart.destroy();
+    if (topCategoriesChart) topCategoriesChart.destroy();
+
+    const productCtx = document.getElementById('topProductsChart');
+
+   topProductsChart = new Chart(productCtx, {
+  type: 'bar',
+  data: {
+    labels: productLabels,
+    datasets: [{
+      label: 'Units Sold',
+      data: productData,
+      backgroundColor: '#6f42c1'
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: {
+        beginAtZero: true,
+        min: 0,
+        max: maxSold,
+        ticks: {
+          stepSize: 1,
+          precision: 0, // ensures whole numbers
+          callback: function(value) {
+            return Number.isInteger(value) ? value : null;
+          }
+        }
+      }
+    }
+  }
+});
+
+    const categoryCtx = document.getElementById('topCategoriesChart');
+    topCategoriesChart = new Chart(categoryCtx, {
+      type: 'doughnut',
+      data: {
+        labels: categoryLabels,
+        datasets: [{
+          data: categoryData,
+          backgroundColor: ['#6f42c1','#0d6efd','#198754','#ffc107','#dc3545','#fd7e14','#20c997','#6610f2','#198754','#e83e8c']
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+  }
+
+  // table
+  function updateOrderTable(orders) {
+    const tbody = document.getElementById("orderTableBody");
+    tbody.innerHTML = "";
+
+    if (!orders || orders.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted">No orders found</td></tr>`;
+      return;
+    }
+
+    orders.forEach(order => {
+      const orderDate = new Date(order.createdOn).toLocaleDateString();
+      const row = `
+        <tr>
+          <td>${orderDate}</td>
+          <td>${order.orderId}</td>
+          <td>${order.userId?.fullname || 'N/A'}</td>
+          <td>${order.items?.[0]?.productId?.productName || 'N/A'}</td>
+          <td>₹${order.totalMRP || 0}</td>
+          <td>₹${order.totalDiscount || 0}</td>
+          <td>₹${order.couponDiscount || 0}</td>
+          <td>₹${order.finalAmount || 0}</td>
+          <td><span class="badge bg-${getStatusColor(order.items?.[0]?.orderStatus)}">${order.items?.[0]?.orderStatus}</span></td>
+        </tr>`;
+      tbody.innerHTML += row;
+    });
+  }
+
+  function getStatusColor(status) {
+    switch (status) {
+      case "Delivered": return "success";
+      case "Cancelled": return "danger";
+      case "Returned": return "warning";
+      case "Placed": return "primary";
+      default: return "secondary";
+    }
+  }
+
+
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const filter = btn.getAttribute("data-filter");
+      loadDashboardData(filter);
+    });
+  });
+
+  document.getElementById("applyCustomFilter").addEventListener("click", () => {
+    const fromDate = document.getElementById("fromDate").value;
+    const toDate = document.getElementById("toDate").value;
+    if (fromDate && toDate) {
+      loadDashboardData("custom", fromDate, toDate);
+    }
+  })
+
+  loadDashboardData();
+</script>
+
 <%- include("../../views/partials/admin/footer") %>

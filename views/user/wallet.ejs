@@ -17,7 +17,7 @@
                 <th>Date</th>
                 <th>Type</th>
                 <th>Amount</th>
-                
+                <th>Description</th>
             </tr>
         </thead>
         <tbody>
@@ -38,7 +38,11 @@
                             <span class="text-danger">-₹<%= tx.amount.toFixed(2) %></span>
                         <% } %>
                     </td>
-                    
+                    <td class="text-capitalize"><%=tx.description%> 
+                    <% if (tx.orderId) { %>
+                        <span>(Order Id:<%= tx.orderId%>)</span>
+                    <% } %>
+                    </td>
                 </tr>
             <% }) %>
         </tbody>

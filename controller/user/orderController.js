@@ -78,10 +78,9 @@ const loadCheckout = async(req,res)=>{
 
             const cartItems = cart.items.map((item)=>{
                 const product = item.productId
-                
-
                 return{
                     productImage: product.productImage[0],
+                    productName: product.productName,
                     quantity: item.quantity
                 }
                 
@@ -210,6 +209,10 @@ const placeOrder = async (req, res)=>{
 
         //cash on delivery
         if(paymentMethod === 'cashOnDelivery'){
+
+            if(cart.totalCartPrice > 1000){
+                return res.json({success: false, message: "Cash on delivery available only for orders upto Rs.1000"})
+            }
             const orderId = uuidv4()
 
             newOrder.orderId = orderId
@@ -260,6 +263,8 @@ const placeOrder = async (req, res)=>{
             wallet.transactions.push({
                 type: 'debit',
                 amount: finalAmount,
+                description: 'order purchase',
+                orderId,
                 date: new Date()
             })
             await wallet.save()
@@ -387,11 +392,23 @@ const orderSuccess = (req, res)=>{
 
 const viewOrder = async (req, res)=>{
     try {
+        const page = parseInt(req.query.page) || 1
+        const limit = 3
+        const skip = (page - 1) * limit
         const searchTerm = req.query.searchInput
         const userId = req.session.user
+
+        let query = {userId: userId}
+
+        let totalOrders = await Order.countDocuments(query)
         
-        let orders = await Order.find({userId: userId}).populate('items.productId').sort({createdOn: -1})
-        
+        let orders = await Order.find(query)
+        .populate('items.productId')
+        .sort({createdOn: -1})
+        .skip(skip)
+        .limit(limit)
+        .lean()
+
         orders = orders.filter(order => Array.isArray(order.items) && order.items.length > 0)
 
         if (searchTerm) {
@@ -406,15 +423,22 @@ const viewOrder = async (req, res)=>{
                 )
             )
         }
+        
+        const totalPages = Math.ceil(totalOrders/limit)
 
         if (!orders || orders.length === 0) {
             return res.render('user/viewOrders', {
-                orders: []
+                orders: [],
+                currentPage: page,
+                totalPages
             });
         }
 
         res.render('user/viewOrders', {
-            orders
+            orders,
+            currentPage: page,
+            totalPages,
+
         });
 
     } catch (error) {
@@ -555,6 +579,8 @@ const cancelOrder = async(req, res)=>{
             wallet.transactions.push({
                 type: 'credit',
                 amount: refundAmount,
+                description: 'order cancelled',
+                orderId: order.orderId,
                 date: new Date()
             })
 
@@ -896,6 +922,8 @@ const cancelAllOrder = async (req, res)=>{
             wallet.transactions.push({
                 type: 'credit',
                 amount: order.finalAmount,
+                description: 'order cancelled',
+                orderId: order.orderId,
                 date: new Date(),
             })
 
@@ -939,18 +967,28 @@ const retryPayment = async (req, res)=>{
     const { orderId } = req.body
     const userId = req.session.user
 
-    const order = await Order.findOne({ _id: orderId, userId })
+    const order = await Order.findOne({ _id: orderId, userId }).populate('items.productId')
     if (!order) return res.json({ success: false, message: "Order not found" })
 
     if (!["Pending", "Failed"].includes(order.paymentStatus)) {
       return res.json({ success: false, message: "Payment already completed" })
     }
-
+    for(let item of order.items){
+       let product = item.productId
+       let orderedSize = item.size
+        let sizeVariant =  product.sizeVariant.find(variant => variant.size === orderedSize)
+        if(sizeVariant.quantity === 0){
+            return res.json({success: false, message: `The product ${product.productName}(${orderedSize}) is out of stock`})
+        }
+        if(sizeVariant.quantity < item.quantity){
+            return res.json({success: false, message: `The product ${product.productName}(${orderedSize}) has only ${sizeVariant.quantity} items left`})
+        }
+    }
     const options = {
       amount: order.finalAmount * 100,
       currency: "INR",
       receipt: "rcpt_" + Date.now(),
-    };
+    }
     const razorpayOrder = await razorpay.orders.create(options)
 
     order.razorpayOrderId = razorpayOrder.id

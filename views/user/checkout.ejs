@@ -107,12 +107,12 @@
     <!-- RIGHT: Summary Sidebar -->
     <div class="right-section">
       <div class="summary-card mb-3">
-        <h6>DELIVERY ESTIMATES</h6>
+        <h6>DELIVERY ESTIMATES <span class="text-secondary">(Expect your delivery within one week)</span></h6>
         <% cartItems.forEach(item=> { %>
           <div class="delivery-item">
             <img src="/uploads/re-product-image/<%= item.productImage %>" alt="product">
             <div>
-              <div>Expect your delivery within one week</div>
+              <p class="text-dark text-capitalize"><%=item.productName%> <span class="text-secondary">(<%=item.quantity%>)</span></p>
             </div>
           </div>
           <% }) %>
