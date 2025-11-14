@@ -278,7 +278,7 @@ document.getElementById('confirmNo').addEventListener('click', function(){
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId }),
-      });
+      })
 
       const data = await res.json();
       if (!data.success) {
@@ -309,7 +309,7 @@ document.getElementById('confirmNo').addEventListener('click', function(){
           if (verifyData.success) {
             window.location.href = verifyData.redirectUrl;
           } else {
-            window.location.href = verifyData.redirectUrl || "/payment_failure";
+            window.location.href = verifyData.redirectUrl
           }
         },
         prefill: { name: "", email: "", contact: "" },
@@ -318,9 +318,10 @@ document.getElementById('confirmNo').addEventListener('click', function(){
 
       const rzp = new Razorpay(options);
       rzp.on("payment.failed", function (response) {
-        console.error("Payment failed", response.error);
-        alert("Payment failed. Try again.");
-      });
+        console.error("Payment failed", response.error)
+        window.location.href = `/order_failure?orderId=${orderId}`
+      })
+
       rzp.open();
 
     } catch (err) {

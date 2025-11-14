@@ -258,7 +258,10 @@ const loadcart = async (req, res)=>{
     const userId = req.session.user
     const userData = await User.findById(userId)
 
-  const cart = await Cart.findOne({ userId }).populate('items.productId')
+  const cart = await Cart.findOne({ userId }).populate({
+            path: "items.productId",
+            populate: { path: "category", select: "isUnlisted" },
+        })
 
   if (!cart || cart.items.length === 0) {
     return res.render('user/cart', 
@@ -287,7 +290,9 @@ const loadcart = async (req, res)=>{
       quantity: item.quantity,
       size: product.sizeVariant,
       selectedSize: item.size,
-      cartItemId: item._id
+      cartItemId: item._id,
+      isBlocked: product.isBlocked,
+      isListed: product.category?.isListed
     }
   })
 

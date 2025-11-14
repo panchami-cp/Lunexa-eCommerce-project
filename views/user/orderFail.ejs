@@ -1,0 +1,122 @@
+<%- include("../partials/user/header")%>
+
+
+<head>
+    <link rel="stylesheet" href="/css/user/orderSuccess.css">
+</head>
+
+
+<div class="container-fluid d-flex">
+    <div class="success-container justify-content">
+        <h1 class="text-danger">Transaction Failed !</h1>
+        <p>Sorry, your transaction has been failed. We failed to place your order.</p>
+        <a href="/orders" class="btn btn-details">View Order Details</a>
+        <a href="#" class="btn btn-continue" id="retryPaymentButton" data-id="<%=orderId%>">Try Again</a>
+    </div>
+</div>
+
+
+<%- include("../partials/user/footer")%>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+   <script src="js/jquery.min.js"></script>
+   <script src="js/plugins.js"></script>
+   <script src="js/SmoothScroll.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"
+     integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe"
+     crossorigin="anonymous"></script>
+   <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+   <script src="js/script.min.js"></script>
+
+   <script>
+    //retry payment
+     document.querySelectorAll("#retryPaymentButton").forEach(button => {
+  button.addEventListener("click", async function () {
+    const orderId = this.dataset.id;
+    if(!orderId){
+      showPopup('Failed to find the order', 'error')
+      return
+    }
+    try {
+      const res = await fetch("/retry_payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId }),
+      })
+
+      const data = await res.json();
+      if (!data.success) {
+        showPopup(data.message, 'error')
+        return;
+      }
+
+      const options = {
+        key: data.key_id,
+        amount: data.amount,
+        currency: "INR",
+        order_id: data.razorpayOrderId,
+        name: "Lunexa Fashion",
+        description: "Order Payment",
+        handler: async function (response) {
+          const verifyRes = await fetch("/verify_payment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              retry: true, 
+            }),
+          });
+
+          const verifyData = await verifyRes.json();
+          if (verifyData.success) {
+            window.location.href = verifyData.redirectUrl;
+          } else {
+            window.location.href = verifyData.redirectUrl || "/order_failure";
+          }
+        },
+        prefill: { name: "", email: "", contact: "" },
+        theme: { color: "#3399cc" },
+      };
+
+      const rzp = new Razorpay(options);
+      rzp.on("payment.failed", function (response) {
+        console.error("Payment failed", response.error);
+        window.location.href = '/order_failure'
+      })
+
+      rzp.open();
+
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong. Try again.");
+    }
+  });
+});
+//popup
+function showPopup(message, type) {
+    const popup = document.createElement('div')
+    popup.textContent = message
+    popup.style.position = 'fixed'
+    popup.style.top = '20px'
+    popup.style.left = '20px'
+    popup.style.padding = '12px 20px'
+    popup.style.borderRadius = '5px'
+    popup.style.color = '#fff'
+    popup.style.zIndex = '9999'
+    popup.style.backgroundColor = type === 'error' ? '#a80810' : '#000'
+    popup.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)'
+    document.body.appendChild(popup)
+
+    setTimeout(() => {
+      popup.remove()
+    }, 4000)
+  }
+   </script>
+
+ </body>
+ 
+ </html>
+
+
+

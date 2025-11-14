@@ -145,7 +145,7 @@ document.addEventListener("DOMContentLoaded", function() {
       const data = await res.json();
 
       if (data.success) {
-        showPopup("Added to cart successfully", "success");
+        showPopup(data.message, "success")
         modal.style.display = "none";
       } else {
         showPopup(data.message || "Failed to add to cart", "error");
@@ -156,6 +156,25 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   });
 });
+//popup
+ function showPopup(message, type) {
+    const popup = document.createElement('div')
+    popup.textContent = message
+    popup.style.position = 'fixed'
+    popup.style.top = '20px'
+    popup.style.left = '20px'
+    popup.style.padding = '12px 20px'
+    popup.style.borderRadius = '5px'
+    popup.style.color = '#fff'
+    popup.style.zIndex = '9999'
+    popup.style.backgroundColor = type === 'error' ? '#a80810' : '#000'
+    popup.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)'
+    document.body.appendChild(popup)
+
+    setTimeout(() => {
+      popup.remove()
+    }, 4000)
+  }
 
 </script>
  

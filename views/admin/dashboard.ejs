@@ -65,24 +65,25 @@
     </div>
 
     <!-- date filter -->
-    <div class="filter-section mb-4">
-      <div class="row align-items-center">
-        <div class="col-md-8">
-          <div class="btn-group" role="group">
-            <button class="btn btn-outline-primary filter-btn" data-filter="today">Today</button>
-            <button class="btn btn-outline-primary filter-btn" data-filter="weekly">Weekly</button>
-            <button class="btn btn-outline-primary filter-btn" data-filter="monthly">Monthly</button>
-            <button class="btn btn-outline-primary filter-btn" data-filter="yearly">Yearly</button>
-          </div>
-        </div>
-        <div class="col-md-4 text-md-end mt-3 mt-md-0">
-          <label class="form-label mb-0 me-2">Custom Date:</label>
-          <input type="date" id="fromDate" class="form-control d-inline-block w-auto">
-          <input type="date" id="toDate" class="form-control d-inline-block w-auto">
-          <button id="applyCustomFilter" class="btn btn-primary btn-sm ms-2">Apply</button>
-        </div>
+   <div class="filter-section mb-4">
+  <div class="row align-items-center justify-content-between g-2">
+    <div class="col-md-4 d-flex flex-wrap align-items-center">
+      <div class="btn-group flex-wrap" role="group">
+        <button class="btn btn-outline-primary filter-btn" data-filter="today">Today</button>
+        <button class="btn btn-outline-primary filter-btn" data-filter="weekly">Weekly</button>
+        <button class="btn btn-outline-primary filter-btn" data-filter="monthly">Monthly</button>
+        <button class="btn btn-outline-primary filter-btn" data-filter="yearly">Yearly</button>
       </div>
     </div>
+    <div class="col-md-8 d-flex align-items-center justify-content-md-end flex-wrap gap-2">
+      <label for="fromDate" class="form-label mb-0">Custom Date:</label>
+      <input type="date" id="fromDate" class="form-control w-auto">
+      <input type="date" id="toDate" class="form-control w-auto">
+      <button id="applyCustomFilter" class="btn btn-primary btn-sm">Apply</button>
+      <div class="w-100"><p id="dateError" class="w-100 text-danger mt-1 text-end" style="display: none;"></p></div>
+    </div>
+  </div>
+</div> 
 
     <!-- charts -->
     <div class="row g-4 mb-4">
@@ -111,6 +112,7 @@
               <th>Order ID</th>
               <th>Customer</th>
               <th>Product</th>
+              <th>Quantity</th>
               <th>MRP</th>
               <th>Discount</th>
               <th>Coupon Share</th>
@@ -148,13 +150,12 @@
       document.getElementById("totalSales").textContent = data.summary.totalSales
 
       // charts
-      updateCharts(data.topProducts, data.topCategories);
-      console.log(data.topProducts)
+      updateCharts(data.topProducts, data.topCategories)
 
       // table
-      updateOrderTable(data.orders);
+      updateOrderTable(data.orderDetails)
     } catch (err) {
-      console.error("Error loading dashboard:", err);
+      console.error("Error loading dashboard:", err)
     }
   }
 
@@ -231,18 +232,19 @@
     }
 
     orders.forEach(order => {
-      const orderDate = new Date(order.createdOn).toLocaleDateString();
+      const orderDate = new Date(order.orderDate).toLocaleDateString();
       const row = `
         <tr>
           <td>${orderDate}</td>
           <td>${order.orderId}</td>
-          <td>${order.userId?.fullname || 'N/A'}</td>
-          <td>${order.items?.[0]?.productId?.productName || 'N/A'}</td>
-          <td>₹${order.totalMRP || 0}</td>
-          <td>₹${order.totalDiscount || 0}</td>
-          <td>₹${order.couponDiscount || 0}</td>
-          <td>₹${order.finalAmount || 0}</td>
-          <td><span class="badge bg-${getStatusColor(order.items?.[0]?.orderStatus)}">${order.items?.[0]?.orderStatus}</span></td>
+          <td>${order.customer}</td>
+          <td>${order.productName}</td>
+          <td>${order.quantity}
+          <td>₹${order.mrp}</td>
+          <td>₹${order.discount}</td>
+          <td>₹${order.couponSharePerUnit}</td>
+          <td>₹${order.netAmount}</td>
+          <td><span class="badge bg-${getStatusColor(order.status)}">${order.status}</span></td>
         </tr>`;
       tbody.innerHTML += row;
     });
@@ -261,17 +263,47 @@
 
   document.querySelectorAll(".filter-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-      const filter = btn.getAttribute("data-filter");
-      loadDashboardData(filter);
-    });
-  });
+      const filter = btn.getAttribute("data-filter")
+      loadDashboardData(filter)
+    })
+  })
 
-  document.getElementById("applyCustomFilter").addEventListener("click", () => {
-    const fromDate = document.getElementById("fromDate").value;
-    const toDate = document.getElementById("toDate").value;
-    if (fromDate && toDate) {
-      loadDashboardData("custom", fromDate, toDate);
-    }
+  document.getElementById("applyCustomFilter").addEventListener("click", (e) => {
+    event.preventDefault()
+    const isValid = true
+    const fromDateInput = document.getElementById("fromDate");
+  const toDateInput = document.getElementById("toDate");
+  const errorDiv = document.getElementById("dateError")
+
+  const fromDate = new Date(fromDateInput.value);
+  const toDate = new Date(toDateInput.value);
+  const today = new Date();
+  fromDate.setHours(0, 0, 0, 0);
+  toDate.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+
+  if (!fromDateInput.value || !toDateInput.value) {
+     showError("Please select both 'From' and 'To' dates.")
+    isValid = false
+  }
+
+  if (fromDate > toDate) {
+    showError("'From Date' cannot be later than 'To Date'.");
+    isValid = false
+  }
+
+  if (toDate > today || fromDate > today) {
+    showError("Dates cannot be in the future.")
+    isValid = false
+  }
+  if(isValid){
+    loadDashboardData("custom", fromDate, toDate)
+    errorDiv.style.display = 'none'
+  }
+  function showError(message){
+    errorDiv.textContent = message;
+    errorDiv.style.display = "block";
+  } 
   })
 
   loadDashboardData();

@@ -19,8 +19,6 @@
   <div class="shop-container">
 
     <aside class="sidebar">
-      <!-- <h4 class="text-uppercase mb-5" style="font-size: 1rem;">indian and fusion wear</h4> -->
-
       <div class="sidebar-section ">
         <form action="/shop_all" method="get" id="searchForm">
   <div class="d-flex justify-content-between align-items-center" style="max-width: 500px;">
@@ -43,11 +41,9 @@
         <i class="bi bi-x-lg"></i>
       </button>
     </div>
-    <!-- <button class="btn btn-light" type="submit">Search</button> -->
   </div>
 </form>
-
-
+<div><button id="clearAllBtn" class="btn btn-outline-secondary">Clear All</button></div>
       </div>
       <div class="sidebar-section">
         <h3>Categories</h3>
@@ -155,9 +151,7 @@
   <!-- footer -->
    <%- include("../partials/user/footer")%>
 
-
    <!-- apply filter and sort -->
-
    <script>
   function getQueryParams() {
     const params = new URLSearchParams(window.location.search);
@@ -204,14 +198,31 @@
    <!-- search -->
   <script>
 
-    function resetPage() {
-    const input = document.getElementById('searchInput');
-    input.value = ''; 
+  //   function resetPage() {
+  //   const input = document.getElementById('searchInput');
+  //   input.value = ''; 
 
-    // reload the page without search param
-    const url = new URL(window.location.href);
-    url.searchParams.delete('search');
-    window.location.href = url.toString();
+  //   // reload the page without search param
+  //   const url = new URL(window.location.href);
+  //   url.searchParams.delete('search');
+  //   window.location.href = url.toString();
+  // }
+
+  // clear all filter function
+  // document.getElementById('clearAllBtn').addEventListener('click', function(){
+  //   document.querySelectorAll('.sidebar-list a').forEach(link => link.classList.remove('active'));
+  //   window.location.href = '/shop_all';
+  // })
+
+    function resetPage() {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) searchInput.value = '';
+
+    document.querySelectorAll('.sidebar-list a').forEach(link => link.classList.remove('active'));
+
+    const baseUrl = window.location.origin + window.location.pathname;
+
+    window.location.href = baseUrl;
   }
 
   </script>
@@ -257,7 +268,6 @@
     });
   });
 });
-
 
   //popup 
 

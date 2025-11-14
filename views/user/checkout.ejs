@@ -167,9 +167,8 @@
       </div>
 
       <div class="coupon-actions">
-        <a href="#" class="apply-btn" data-cartId="<%=cartData._id%>" data-couponId="<%=coupon._id%>">Apply</a>
-        <a href="#" class="remove-btn" data-cartId="<%=cartData._id%>" data-couponId="<%=coupon._id%>">Remove</a>
-        
+        <a href="#" class="apply-btn" data-cartId="<%=cartData._id%>" data-couponId="<%=coupon._id%>">Apply Coupon</a>
+         <a href="#" class="remove-btn" data-cartId="<%=cartData._id%>" data-couponId="<%=coupon._id%>">Remove Coupon</a>
       </div>
     </div>
   <% }) %>
@@ -291,11 +290,7 @@ try {
             })
           })
           const verifyData = await verifyRes.json()
-          if(verifyData.success){
-            window.location.href = verifyData.redirectUrl
-          }else{
-            window.location.href = verifyData.redirectUrl
-          }
+          window.location.href = verifyData.redirectUrl 
         },
         prefil: {
           name: "", 
@@ -308,9 +303,24 @@ try {
       }
 
       const rzp = new Razorpay(options)
-      rzp.on('payment.failed', function (response){
-        console.error("payment failed: ", response.error)
-        window.location.href = '/payment_failure'
+      rzp.on('payment.failed', async function (response){
+        try {
+          const failedRes = await fetch('/payment_failure', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razorpay_order_id: response.error.metadata.order_id,
+              razorpay_payment_id: response.error.metadata.payment_id,
+              addressId
+            })
+          })
+          const failedData = await failedRes.json()
+          window.location.href = failedData.redirectUrl
+        } catch (error) {
+          console.error("Failed to handle payment failure:", err);
+          window.location.href = '/pageNotFound';
+          // window.location.href = '/order_failure'
+        }
       })
       rzp.open()
     }
@@ -322,36 +332,40 @@ try {
   })
 
 // apply coupon
-document.querySelectorAll('.apply-btn').forEach((btn)=>{
-  btn.addEventListener('click', (event)=>{
-    event.preventDefault()
+document.querySelectorAll('.apply-btn').forEach((btn) => {
+  btn.addEventListener('click', (event) => {
+    event.preventDefault();
 
-    const cartId = btn.dataset.cartid
-    const couponId = btn.dataset.couponid
+    const cartId = btn.dataset.cartid;
+    const couponId = btn.dataset.couponid;
 
-    fetch('/apply_coupon',{
+    fetch('/apply_coupon', {
       method: "POST",
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({cartId, couponId})
+      body: JSON.stringify({ cartId, couponId })
     })
-    .then((res)=> res.json())
-    .then((data)=>{
-      if(data.success){
-        document.getElementById('couponDiscount').innerHTML = `-₹${data.discountAmount}`
-        document.getElementById('finalAmount').innerHTML = data.payableAmount
-      }
-    })
-    .catch((err)=>{
-      console.log(err)
-    })
-  })
-})
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          showPopup(data.message, 'success');
+          document.getElementById('couponDiscount').innerHTML = `-₹${data.discountAmount}`;
+          document.getElementById('finalAmount').innerHTML = data.payableAmount;
+        } else {
+          showPopup(data.message, 'error');
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  });
+});
 
-//remove coupon
+
+
+// remove coupon
 document.querySelectorAll('.remove-btn').forEach((btn)=>{
   btn.addEventListener('click', (event)=>{
     event.preventDefault()
-
     const cartId = btn.dataset.cartid
     const couponId = btn.dataset.couponid
 
@@ -362,8 +376,17 @@ document.querySelectorAll('.remove-btn').forEach((btn)=>{
     })
     .then((res)=>res.json())
     .then((data)=>{
-      document.getElementById('couponDiscount').innerHTML = `-₹${data.discountAmount}`
-      document.getElementById('finalAmount').innerHTML = data.payableAmount
+      if(data.success){
+        showPopup(data.message, 'success')
+        document.getElementById('couponDiscount').innerHTML = `-₹${data.discountAmount}`
+        document.getElementById('finalAmount').innerHTML = data.payableAmount
+      }
+      else{
+        showPopup(data.message, 'error')
+      }
+    })
+    .catch((err)=>{
+      console.error(err)
     })
   })
 })
@@ -378,7 +401,7 @@ document.querySelectorAll('.remove-btn').forEach((btn)=>{
     popup.style.borderRadius = '5px'
     popup.style.color = '#fff'
     popup.style.zIndex = '9999'
-    popup.style.backgroundColor = type === 'error' ? '#F54927' : '#000'
+    popup.style.backgroundColor = type === 'error' ? '#a80810' : '#000'
     popup.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)'
     document.body.appendChild(popup)
 

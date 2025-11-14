@@ -120,9 +120,9 @@ const dashboardData = async (req,res)=>{
     const totalCustomers = await User.countDocuments();
     const totalOrders = await Order.countDocuments({
         ...dateFilter, 
-        "items.orderStatus": { $in: ["Delivered", "Out for delivery", "Shipped", "Placed"] }
+        paymentStatus: "Success"
     })
-    const totalSales = await Order.countDocuments({...dateFilter, "items.orderStatus": "Delivered"})
+    const totalSales = await Order.countDocuments({...dateFilter, "items.orderStatus": {$nin: ['Cancelled', 'Returned']}})
     const totalRevenue = await Order.aggregate([
       { $match: {
         ...dateFilter,
@@ -133,17 +133,44 @@ const dashboardData = async (req,res)=>{
     ]);
     const totalRevenueAmount = totalRevenue[0]?.total || 0;
 
-    const orders = await Order.find(dateFilter)
+    const orders = await Order.find({...dateFilter, paymentStatus: 'Success'})
       .populate("userId", "fullname")
       .populate("items.productId", "productName")
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(perPage);
+      .limit(perPage) 
 
-    // const totalOrdersCount = await Order.countDocuments(dateFilter);
+     const orderDetails = []
+
+     orders.forEach(order => {
+      const totalDeliveredPrice = order.items.reduce((sum, item) => sum + item.totalPrice, 0)
+  order.items.forEach(item => {
+    const product = item.productId;
+    if (!product) return;
+    let discount = item.regularPrice - item.price
+    
+    const couponShareTotal = order.couponDiscount ? (item.totalPrice / totalDeliveredPrice) * order.couponDiscount : 0
+    const couponSharePerUnit = couponShareTotal / item.quantity
+
+   const netAmount = item.quantity * (item.price - couponSharePerUnit)
+
+    orderDetails.push({
+      orderDate: order.createdAt,
+      orderId: order.orderId,
+      customer: order.userId?.fullname || "Unknown",
+      productName: product.productName,
+      quantity: item.quantity,
+      mrp: item.regularPrice,
+      discount: discount || 0,
+      couponSharePerUnit: couponSharePerUnit.toFixed(2),
+      netAmount: netAmount.toFixed(2),
+      status: item.orderStatus
+    });
+  });
+});
 
     const topProducts = await Order.aggregate([
-  { $match: { "items.orderStatus": "Delivered" } },
+  { $match: { ...dateFilter, "items.orderStatus": {$nin: ["Cancelled", "Returned"]} } },
   { $unwind: "$items" },
   {
     $group: {
@@ -170,12 +197,11 @@ const dashboardData = async (req,res)=>{
       sold: "$totalSold" 
     }
   }
-]);
-
+])
 
     const topCategories = await Order.aggregate([
   { $unwind: "$items" },
-  { $match: { "items.orderStatus": "Delivered" } },
+  { $match: { ...dateFilter, "items.orderStatus": {$nin: ["Cancelled", "Returned"]} } },
   {
     $lookup: {
       from: "products",
@@ -222,7 +248,7 @@ const dashboardData = async (req,res)=>{
       },
       topProducts,
       topCategories,
-      orders,
+      orderDetails,
       pagination: {
         currentPage: pageNum,
         totalPages: Math.ceil(totalOrders / perPage),

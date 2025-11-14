@@ -414,7 +414,7 @@ const loadShopAll = async (req, res) => {
     const filter = {
       category: { $in: categoryIds },
       isBlocked: false
-    };
+    }
 
     if (search.trim()) {
         filter.productName = { $regex: search, $options: "i" };

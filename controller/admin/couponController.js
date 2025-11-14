@@ -10,7 +10,7 @@ const loadCoupon = async (req, res)=>{
         
         let page = parseInt(req.query.page) || 1
         
-        const limit = 5
+        const limit = 10
         let skip = (page - 1)*limit
 
         const coupons = await Coupon.find({name:{$regex:".*"+search+".*", $options:"i"}})

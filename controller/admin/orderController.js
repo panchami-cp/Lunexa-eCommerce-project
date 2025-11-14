@@ -827,7 +827,7 @@ let totalCoupon = 0
 let totalNetAmount = 0
 
 orderData.forEach(order => {
-  order.items = order.items.filter(item => item.orderStatus === "Delivered");
+  order.items = order.items.filter(item => item.orderStatus === "Delivered")
 
   const totalDeliveredPrice = order.items.reduce((sum, item) => sum + item.totalPrice, 0)
 

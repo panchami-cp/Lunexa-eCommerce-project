@@ -13,6 +13,7 @@ const env = require('dotenv').config()
 const { v4: uuidv4 } = require('uuid')
 const { redirect } = require('express/lib/response')
 const Wallet = require('../../model/walletSchema')
+const {createNewOrder} = require('../../helpers/placeOrderHelper')
 
 
 const loadCheckout = async(req,res)=>{
@@ -95,7 +96,8 @@ const loadCheckout = async(req,res)=>{
                 currentCoupons,
                 applicableCoupon,
                 couponDiscount,
-                walletBalance
+                walletBalance,
+                appliedCoupon: req.session.appliedCoupon
             })
 
         }
@@ -122,14 +124,27 @@ const placeOrder = async (req, res)=>{
             return res.json({success: false, redirectUrl: '/userNotFound'})
         }
 
-        const cart = await Cart.findOne({userId: userId}).populate('items.productId')
+        const cart = await Cart.findOne({userId: userId}).populate({
+            path: "items.productId",
+            populate: { path: "category", select: "isUnlisted" },
+        })
         if(!cart || cart.items.length === 0){
            return res.status(400).json({success: false, message: 'Cart not found'})
         }  
 
-        const selectedAddressDoc = await Address.findOne({'address._id':addressId},{'address.$':1})
+        const hasBlockedOrUnlisted = cart.items.some(item => {
+            const product = item.productId;
+            if (!product || !product.category) return false;
 
-        const selectedAddress = selectedAddressDoc.address[0]
+            return product.isBlocked === true || product.category.isUnlisted === true;
+        })
+
+        if (hasBlockedOrUnlisted) {
+            return res.json({
+                success: false,
+                message: "Some products are blocked or belong to an unlisted category. Please check your cart."
+            });
+        }
 
         //stock validation
         let stockIssue = false
@@ -174,44 +189,22 @@ const placeOrder = async (req, res)=>{
 
     //apply coupon
     let appliedCoupon = null
-
         if(req.session.appliedCoupon){
             appliedCoupon = {
                 couponId : req.session.appliedCoupon.id,
-                discountAmount: req.session.appliedCoupon.discountAmount
+                discountAmount: req.session.appliedCoupon.discountAmount,
+                payableAmount: req.session.appliedCoupon.payableAmount
             }
         }
 
-        const finalAmount = appliedCoupon ? req.session.appliedCoupon.payableAmount : cart.totalCartPrice
-
-         const orderAddress = {
-                name: selectedAddress.name,
-                building: selectedAddress.building,
-                area: selectedAddress.area,
-                landmark: selectedAddress.landmark,
-                city: selectedAddress.city,
-                state: selectedAddress.state,
-                pincode: selectedAddress.pincode,
-                phone: selectedAddress.phone,
-                alternatePhone: selectedAddress.alternatePhone
-            }
-
-             const newOrder = new Order({
-                userId: userId,
-                items: cart.items,
-                totalMRP: cart.totalMRP,
-                totalDiscount: cart.totalDiscount,
-                couponDiscount: appliedCoupon? appliedCoupon. discountAmount : 0,
-                finalAmount: finalAmount,
-                address: orderAddress,
-                coupon: appliedCoupon ? appliedCoupon.couponId : null
-            })
-
+        //new order
+        const newOrder = await createNewOrder(userId, cart, addressId,appliedCoupon)
+        
         //cash on delivery
         if(paymentMethod === 'cashOnDelivery'){
 
             if(cart.totalCartPrice > 1000){
-                return res.json({success: false, message: "Cash on delivery available only for orders upto Rs.1000"})
+                return res.json({success: false, message: "Cash on delivery not available for orders more than Rs.1000"})
             }
             const orderId = uuidv4()
 
@@ -294,18 +287,18 @@ const placeOrder = async (req, res)=>{
         // razorpay
         if(paymentMethod === "razorpay"){
             const options = {
-                amount: finalAmount * 100,
+                amount: newOrder.finalAmount * 100,
                 currency: "INR",
                 receipt: "rcpt_" + Date.now()
             }
 
             const razorpayOrder = await razorpay.orders.create(options)
 
-            newOrder.orderId = uuidv4();
-            newOrder.razorpayOrderId = razorpayOrder.id
-            newOrder.paymentMethod = 'razorpay'
-            newOrder.paymentStatus = 'Pending'
-            await newOrder.save()
+            // newOrder.orderId = uuidv4()
+            // newOrder.razorpayOrderId = razorpayOrder.id
+            // newOrder.paymentMethod = 'razorpay'
+            // newOrder.paymentStatus = 'Pending'
+            // await newOrder.save()
 
             return res.json({
                 success: true,
@@ -721,17 +714,20 @@ const downloadInvoice = async (req, res)=>{
 
 const applyCoupon = async (req, res)=>{
     try {
-
         const {cartId, couponId} = req.body
 
         const cart = await Cart.findById(cartId)
         const coupon = await Coupon.findById(couponId)
 
         if(!cart){
-            return res.json({success: false})
+            return res.json({success: false, message: "Cannot find cart"})
         }
         if(!coupon){
-            return res.json({success: false})
+            return res.json({success: false, message: 'Cannot find coupon'})
+        }
+
+        if(req.session.appliedCoupon !== null){
+            return res.json({success: false, message: "Coupon has applied already."})
         }
 
         let cartTotal = cart.totalCartPrice
@@ -756,10 +752,10 @@ const applyCoupon = async (req, res)=>{
             payableAmount
         }
 
-        return res.json({ success: true, payableAmount, discountAmount })
+        return res.json({ success: true,message: "Coupon applied successfully", payableAmount, discountAmount})
 
     } catch (error) {
-        console.error("Errorn in apply coupon: ",error)
+        console.error("Error in apply coupon: ",error)
         return res.json({success: false})
     }
 }
@@ -790,7 +786,7 @@ const removeCoupon = async (req, res)=>{
       success: true,
       payableAmount: cart.totalCartPrice,
       discountAmount: 0,                   
-      message: "Coupon removed successfully"
+      message: "Coupon removed"
     });
         
     } catch (error) {
@@ -800,9 +796,10 @@ const removeCoupon = async (req, res)=>{
 }
 
 const verifyPayment = async (req, res)=>{
+    let newOrder
     try {
 
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, retry } = req.body
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, retry , addressId} = req.body
         const userId = req.session.user
 
         const sign = razorpay_order_id + "|" + razorpay_payment_id
@@ -811,27 +808,47 @@ const verifyPayment = async (req, res)=>{
         .update(sign.toString())
         .digest("hex")
 
+        const cart = await Cart.findOne({ userId }).populate("items.productId");
+            if (!cart || cart.items.length === 0) {
+                return res.json({ success: false, message: "Cart is empty" });
+            }
+
+        //apply coupon
+    let appliedCoupon = null
+        if(req.session.appliedCoupon){
+            appliedCoupon = {
+                couponId : req.session.appliedCoupon.id,
+                discountAmount: req.session.appliedCoupon.discountAmount,
+                payableAmount: req.session.appliedCoupon.payableAmount
+            }
+        }
+        
         if (razorpay_signature !== expectedSign) {
-            await Order.updateOne({ razorpayOrderId: razorpay_order_id }, { $set: { paymentStatus: 'Failed' } })
-            return res.json({ success: false, redirectUrl: '/payment_failure' })
-        }
+            newOrder = await createNewOrder(userId, cart, addressId)
+           newOrder.orderId = uuidv4()
+            newOrder.paymentStatus = 'Failed',
+            newOrder.paymentMethod = 'razorpay',
+            newOrder.razorpayPaymentId = razorpay_payment_id,
+            newOrder.razorpayOrderId = razorpay_order_id
+            await newOrder.save()
 
-        const order = await Order.findOne({ razorpayOrderId: razorpay_order_id }).populate("items.productId");
-        if (!order) {
-            return res.json({ success: false, message: "Order not found" });
+            req.session.appliedCoupon = null
+    
+            await Cart.updateOne({ userId }, {
+                $set: { items: [], totalQuantity: 0, totalCartPrice: 0, totalMRP: 0, totalDiscount: 0 }
+            });
+            // req.session.orderId = newOrder.orderId
+            return res.json({ success: false, redirectUrl: `/order_failure?orderId=${newOrder._id}` })
         }
+        newOrder = await createNewOrder(userId, cart, addressId, appliedCoupon)
+         newOrder.orderId = uuidv4()
+            newOrder.paymentStatus = 'Success',
+            newOrder.paymentMethod = 'razorpay',
+            newOrder.razorpayPaymentId = razorpay_payment_id,
+            newOrder.razorpayOrderId = razorpay_order_id
+            await newOrder.save()
 
-        order.razorpayPaymentId = razorpay_payment_id
-        order.paymentStatus = 'Success'
-        await order.save()
-
-         for (const item of order.items) {
-            const product = item.productId;
-            await Product.updateOne(
-                { _id: product._id, "sizeVariant.size": item.size },
-                { $inc: { "sizeVariant.$.quantity": -item.quantity, totalQuantity: -item.quantity } }
-            )
-        }
+        await updateProductStock(cart)
 
         if (!retry) {
             await Cart.updateOne({ userId }, {
@@ -839,42 +856,68 @@ const verifyPayment = async (req, res)=>{
             });
         }
         await Cart.updateOne(
-            { userId },
-            {
-                $set: {
-                items: [],
-                totalQuantity: 0,
-                totalCartPrice: 0,
-                totalMRP: 0,
-                totalDiscount: 0,
-            },
-            }
+            { userId },{$set: {items: [], totalQuantity: 0, totalCartPrice: 0, totalMRP: 0, totalDiscount: 0}}
         )
 
-        if (order.coupon) {
-            await User.updateOne(
-                { _id: userId },
-                { $push: { usedCoupon: { couponId: order.coupon } } }
-            )
+        if (newOrder.coupon) {
+            await User.updateOne({ _id: userId },{ $push: { usedCoupon: { couponId: newOrder.coupon } } })
             req.session.appliedCoupon = null
         }
 
-        req.session.orderId = order.orderId
+        req.session.orderId = newOrder.orderId
 
         return res.json({ success: true, redirectUrl: "/order_success" })
         
     } catch (error) {
         console.error("Error verifying payment:", error)
-        return res.json({ success: false, redirectUrl: '/payment_failure' })
+        const redirectUrl = newOrder? `/order_failure?orderId=${newOrder._id}`: '/order_failure'
+        return res.json({ success: false, redirectUrl })
     }
 }
 
 const paymentFail = async (req, res)=>{
     try {
-        
-        res.render('user/paymentFail')
+        const { razorpay_order_id, razorpay_payment_id, addressId } = req.body
+        const userId = req.session.user
+        if (!razorpay_order_id) {
+            return res.json({ success: false, message: "Invalid order ID" });
+        }
+
+        if (!addressId) {
+            return res.json({ success: false, message: "Address not found" });
+        }
+        const cart = await Cart.findOne({ userId }).populate("items.productId");
+            if (!cart || cart.items.length === 0) {
+                return res.json({ success: false, message: "Cart is empty" });
+            }
+
+        const newOrder = await createNewOrder(userId, cart, addressId)
+        newOrder.orderId = uuidv4()
+        newOrder.paymentMethod = 'razorpay'
+        newOrder.paymentStatus = 'Failed'
+        newOrder.razorpayPaymentId = razorpay_payment_id
+        newOrder.razorpayOrderId = razorpay_order_id
+        await newOrder.save()
+
+        await Cart.updateOne({ userId }, {
+            $set: { items: [], totalQuantity: 0, totalCartPrice: 0, totalMRP: 0, totalDiscount: 0 }
+        });
+
+        req.session.appliedCoupon = null
+
+        return res.json({success: true, redirectUrl: `/order_failure?orderId=${newOrder._id}`})
     } catch (error) {
-        
+        console.error('Error in failed payment process: ',error)
+        res.json({success: false})
+    }
+}
+
+const orderFailurePage = async (req, res)=>{
+    try {
+        const orderId = req.query.orderId || null
+        res.render('user/orderFail', {orderId})
+    } catch (error) {
+        console.error('Error in load order failure page: ', error)
     }
 }
 
@@ -973,6 +1016,7 @@ const retryPayment = async (req, res)=>{
     if (!["Pending", "Failed"].includes(order.paymentStatus)) {
       return res.json({ success: false, message: "Payment already completed" })
     }
+    //stock validation
     for(let item of order.items){
        let product = item.productId
        let orderedSize = item.size
@@ -1023,5 +1067,6 @@ module.exports = {
     paymentFail,
     cancelAllOrder,
     returnAllOrder,
-    retryPayment
+    retryPayment,
+    orderFailurePage
 }

@@ -36,6 +36,9 @@
                       <div>
                         <h6 class="fw-bold mb-1 text-uppercase">
                           <%= item.productName %>
+                          <%if(item.isBlocked || item.isListed === false){%>
+                            <span class="badge bg-danger">This product is currently unavailable</span>
+                            <%}%>
                         </h6>
 
                         <!-- Size Selection -->
