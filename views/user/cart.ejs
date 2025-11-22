@@ -116,7 +116,7 @@
                 </span></span>
             </div>
             <a href="/checkout">
-              <button class="btn btn-danger w-100 mt-3">CONTINUE</button>
+              <button class="btn btn-danger w-100 mt-3" id="continueOrder">CONTINUE</button>
             </a>
           </div>
         </div>
@@ -152,7 +152,18 @@
     })
   </script>
   <%}%>
-
+<!-- continue order -->
+  <!-- <script>
+    document.getElementById('continueOrder').addEventListener('click', async(event)=>{
+      event.preventDefault()
+      const res = fetch('/checkout', 
+      {
+        method: 'GET',
+        headers: {'Content: Type': 'application/json'}
+      })
+      const data = await res.json()
+    })
+  </script> -->
 
   <script>
     const confirmModal = document.getElementById('confirmRemoveModal');
@@ -216,7 +227,7 @@
 
     setTimeout(() => {
       popup.remove()
-    }, 3000)
+    }, 5000)
   }
  
 </script>

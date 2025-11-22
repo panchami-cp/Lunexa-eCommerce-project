@@ -5,7 +5,11 @@
     <link rel="stylesheet" href="/css/user/orderCancelPage.css">
   </head>
 
-  <div class="container-fluid">
+  <div class="container-fluid d-flex">
+    <div class="sidebar">
+      <%- include("../partials/user/profileSidebar")%>
+    </div>
+    <div class="content-area flex-grow-1 ms-4">
 
     <div class="d-flex justify-content-evenly align-items-center mb-4 mt-4">
 
@@ -114,7 +118,8 @@
 
       </div>
       <% }) %>
-      
+      </div>
+</div>
       <!-- pagination -->
        <div class="pagination d-flex justify-content-center mt-4">
   <% if (currentPage > 1) { %>
@@ -133,7 +138,7 @@
     <a href="/orders?page=<%= currentPage + 1 %>" class="btn btn-outline-secondary mx-1">Next &raquo;</a>
   <% } %>
 </div>
-  </div>
+  
 
   <!-- return all confirmation modal -->
 <div class="modal fade" id="returnAllModal" tabindex="-1" aria-labelledby="returnAllModalLabel" aria-hidden="true">

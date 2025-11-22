@@ -29,6 +29,22 @@ const loadCheckout = async(req,res)=>{
             return res.redirect('/pageNotFound')
         }
 
+        const cart = await Cart.findOne({userId: userId}).populate({
+            path: "items.productId",
+            populate: { path: "category", select: "isUnlisted" }})
+        
+         const hasBlockedOrUnlisted = cart.items.some(item => {
+            const product = item.productId;
+            if (!product || !product.category) return false;
+
+            return product.isBlocked === true || product.category.isUnlisted === true;
+        })
+
+        if (hasBlockedOrUnlisted) {
+            req.flash('error', 'Some products are blocked or belong to an unlisted category.')
+            return res.redirect('/cart')
+        }
+
         const wallet = await Wallet.findOne({userId: userId})
 
         const walletBalance = wallet? wallet.balance : 0
@@ -43,15 +59,11 @@ const loadCheckout = async(req,res)=>{
             endDate: {$gte: today}
         }).sort({endDate:1})
 
-        const cart = await Cart.findOne({userId: userId}).populate('items.productId')
-
         const findAddress = await Address.findOne({userId: userId})
         let addresses
 
         if(findAddress){
-
             addresses = findAddress.address
-
         }
 
         const priceDetails = {
@@ -97,7 +109,7 @@ const loadCheckout = async(req,res)=>{
                 applicableCoupon,
                 couponDiscount,
                 walletBalance,
-                appliedCoupon: req.session.appliedCoupon
+                // appliedCoupon: req.session.appliedCoupon
             })
 
         }
@@ -238,10 +250,9 @@ const placeOrder = async (req, res)=>{
 
         //wallet
         const wallet = await Wallet.findOne({userId})
-        
         if(paymentMethod === 'wallet'){
 
-            if(!wallet || wallet.balance < finalAmount){
+            if(!wallet || wallet.balance < newOrder.finalAmount){
                 return res.json({success: false, message: 'Cannot find wallet or insufficient balance in wallet'})
             }
 
@@ -252,10 +263,10 @@ const placeOrder = async (req, res)=>{
 
             await newOrder.save()
 
-            wallet.balance -= finalAmount
+            wallet.balance -= newOrder.finalAmount
             wallet.transactions.push({
                 type: 'debit',
-                amount: finalAmount,
+                amount: newOrder.finalAmount,
                 description: 'order purchase',
                 orderId,
                 date: new Date()
@@ -279,9 +290,7 @@ const placeOrder = async (req, res)=>{
                 req.session.appliedCoupon = null
             }
 
-            req.session.orderId = orderId
-
-            return res.json({success: true, redirectUrl: '/order_success'})
+            return res.json({success: true, redirectUrl: `/order_success?orderId=${newOrder._id}`})
         }
 
         // razorpay
@@ -293,12 +302,6 @@ const placeOrder = async (req, res)=>{
             }
 
             const razorpayOrder = await razorpay.orders.create(options)
-
-            // newOrder.orderId = uuidv4()
-            // newOrder.razorpayOrderId = razorpayOrder.id
-            // newOrder.paymentMethod = 'razorpay'
-            // newOrder.paymentStatus = 'Pending'
-            // await newOrder.save()
 
             return res.json({
                 success: true,
@@ -312,10 +315,8 @@ const placeOrder = async (req, res)=>{
         return res.json({success: false, message: "Invalid payment method"})
         
     } catch (error) {
-
         console.error('Error in place order:', error)
         res.status(500).json({success: false, redirectUrl:'/pageNotFound'})
-        
     }
 }
 
@@ -368,11 +369,12 @@ async function updateProductStock(cart){
 const orderSuccess = (req, res)=>{
     try {
 
-        const orderId = req.session.orderId
+        const orderId = req.query.orderId
 
-        if(!orderId){
-            return res.redirect('/pageNotFound')
-        }
+        // if(!orderId){
+        //     return res.redirect('/pageNotFound')
+        // }
+
 
         res.render('user/orderSuccess',{orderId: orderId})
         
@@ -726,7 +728,8 @@ const applyCoupon = async (req, res)=>{
             return res.json({success: false, message: 'Cannot find coupon'})
         }
 
-        if(req.session.appliedCoupon !== null){
+        if(req.session.appliedCoupon){
+            console.log(req.session.appliedCoupon)
             return res.json({success: false, message: "Coupon has applied already."})
         }
 
@@ -796,7 +799,7 @@ const removeCoupon = async (req, res)=>{
 }
 
 const verifyPayment = async (req, res)=>{
-    let newOrder
+    let order
     try {
 
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature, retry , addressId} = req.body
@@ -807,6 +810,32 @@ const verifyPayment = async (req, res)=>{
         .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
         .update(sign.toString())
         .digest("hex")
+        const isvalid = razorpay_signature === expectedSign
+        if(retry){
+            order = await Order.findOne({
+                razorpayOrderId: razorpay_order_id,
+                userId
+            })
+            if(!order){
+        
+                return res.json({ success: false, redirectUrl: "/order_failure" })
+            }
+            if(!isvalid){
+                order.paymentStatus = "Failed";
+                order.razorpayPaymentId = razorpay_payment_id;
+                await order.save();
+                return res.json({ success: false, redirectUrl: `/order_failure?orderId=${order._id}` })
+            }
+            order.paymentStatus = "Success";
+            order.razorpayPaymentId = razorpay_payment_id;
+            await order.save();
+
+            await updateProductStock(order);
+            return res.json({
+                success: true,
+                redirectUrl: `/order_success?orderId=${order._id}`
+            });
+        }
 
         const cart = await Cart.findOne({ userId }).populate("items.productId");
             if (!cart || cart.items.length === 0) {
@@ -823,14 +852,14 @@ const verifyPayment = async (req, res)=>{
             }
         }
         
-        if (razorpay_signature !== expectedSign) {
-            newOrder = await createNewOrder(userId, cart, addressId)
-           newOrder.orderId = uuidv4()
-            newOrder.paymentStatus = 'Failed',
-            newOrder.paymentMethod = 'razorpay',
-            newOrder.razorpayPaymentId = razorpay_payment_id,
-            newOrder.razorpayOrderId = razorpay_order_id
-            await newOrder.save()
+        if (!isvalid) {
+            order = await createNewOrder(userId, cart, addressId)
+           order.orderId = uuidv4()
+            order.paymentStatus = 'Failed',
+            order.paymentMethod = 'razorpay',
+            order.razorpayPaymentId = razorpay_payment_id,
+            order.razorpayOrderId = razorpay_order_id
+            await order.save()
 
             req.session.appliedCoupon = null
     
@@ -838,39 +867,34 @@ const verifyPayment = async (req, res)=>{
                 $set: { items: [], totalQuantity: 0, totalCartPrice: 0, totalMRP: 0, totalDiscount: 0 }
             });
             // req.session.orderId = newOrder.orderId
-            return res.json({ success: false, redirectUrl: `/order_failure?orderId=${newOrder._id}` })
+            return res.json({ success: false, redirectUrl: `/order_failure?orderId=${order._id}` })
         }
-        newOrder = await createNewOrder(userId, cart, addressId, appliedCoupon)
-         newOrder.orderId = uuidv4()
-            newOrder.paymentStatus = 'Success',
-            newOrder.paymentMethod = 'razorpay',
-            newOrder.razorpayPaymentId = razorpay_payment_id,
-            newOrder.razorpayOrderId = razorpay_order_id
-            await newOrder.save()
+        order = await createNewOrder(userId, cart, addressId, appliedCoupon)
+         order.orderId = uuidv4()
+            order.paymentStatus = 'Success',
+            order.paymentMethod = 'razorpay',
+            order.razorpayPaymentId = razorpay_payment_id,
+            order.razorpayOrderId = razorpay_order_id
+            await order.save()
 
         await updateProductStock(cart)
 
-        if (!retry) {
-            await Cart.updateOne({ userId }, {
-                $set: { items: [], totalQuantity: 0, totalCartPrice: 0, totalMRP: 0, totalDiscount: 0 }
-            });
-        }
         await Cart.updateOne(
             { userId },{$set: {items: [], totalQuantity: 0, totalCartPrice: 0, totalMRP: 0, totalDiscount: 0}}
         )
 
-        if (newOrder.coupon) {
-            await User.updateOne({ _id: userId },{ $push: { usedCoupon: { couponId: newOrder.coupon } } })
+        if (order.coupon) {
+            await User.updateOne({ _id: userId },{ $push: { usedCoupon: { couponId: order.coupon } } })
             req.session.appliedCoupon = null
         }
 
-        req.session.orderId = newOrder.orderId
+        // req.session.orderId = order.orderId
 
-        return res.json({ success: true, redirectUrl: "/order_success" })
+        return res.json({ success: true, redirectUrl: `/order_success?orderId=${order._id}` })
         
     } catch (error) {
         console.error("Error verifying payment:", error)
-        const redirectUrl = newOrder? `/order_failure?orderId=${newOrder._id}`: '/order_failure'
+        const redirectUrl = order? `/order_failure?orderId=${order._id}`: '/order_failure'
         return res.json({ success: false, redirectUrl })
     }
 }
@@ -1044,7 +1068,9 @@ const retryPayment = async (req, res)=>{
       key_id: process.env.RAZORPAY_KEY_ID,
       amount: razorpayOrder.amount,
       razorpayOrderId: razorpayOrder.id,
-    });
+      retry: true,
+      orderId: order._id
+    })
     } catch (error) {
          console.error(err);
         res.status(500).json({ success: false, message: "Server error" })

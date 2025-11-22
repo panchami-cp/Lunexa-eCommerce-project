@@ -22,6 +22,7 @@ const userAuth = (req,res,next)=>{
 }
 
 const adminAuth = (req,res,next)=>{
+    if(req.session.admin){
     User.findOne({isAdmin:true})
     .then(data=>{
         if(data){
@@ -34,28 +35,9 @@ const adminAuth = (req,res,next)=>{
         console.log("Error in adminAuth middleware "+error)
         res.status(500).send("Internal server error")
     })
-}
-
-const setUserName = async (req, res, next) => {
-  try {
-    if (req.session && req.session.user) {
-
-      const user = await User.findById(req.session.user).select('fullname')
-
-      if (user) {
-        res.locals.user = user 
-      } else {
-        res.locals.user = null
-      }
-    } else {
-      res.locals.user = null
+    }else{
+        res.redirect('/admin/login')
     }
-    next()
-  } catch (err) {
-    console.error("Error in setUserName middleware:", err)
-    res.locals.user = null
-    next()
-  }
 }
 
 const checkBlocked = async (req, res, next) => {
@@ -76,49 +58,8 @@ const checkBlocked = async (req, res, next) => {
     next();
 }
 
-const cart = async (req, res, next)=>{
-
-    try {
-
-        const userId = req.session.user
-
-    if(!userId){
-        res.locals.cart = null
-        return next()
-    }
-
-    const cartData = await Cart.findOne({userId: userId})
-
-    if(cartData){
-
-        res.locals.cart = cartData.totalQuantity
-
-    }else{
-
-        res.locals.cart = null
-    }
-
-    next()
-        
-    } catch (error) {
-
-        next(error)
-        
-    }
-    
-    
-
-}
-
-
-
-
-
-
 module.exports = {
     userAuth,
     adminAuth,
-    setUserName,
-    checkBlocked,
-    cart
+    checkBlocked
 }

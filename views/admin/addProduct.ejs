@@ -301,11 +301,11 @@
             }
 
 
-
             const selectedImages = []
-            document.getElementById('input1').addEventListener('change', handleFileSelect)
-
-
+            const input1 = getElementById('input1')
+            
+            input1.addEventListener('change', handleFileSelect)
+            
             function handleFileSelect(event) {
               const addedImagesContainer = document.getElementById('addedImagesContainer')
               addedImagesContainer.innerHTML = ""
@@ -339,6 +339,7 @@
                 addedImagesContainer.appendChild(thumbnail)
               }
             }
+          
 
 
             // form validation 

@@ -83,7 +83,9 @@ const loadAddProduct = async(req,res)=>{
 
         const sizeOptions = Product.schema.path('sizeVariant').schema.path('size').enumValues
 
-        res.render('admin/addProduct',{message: null,
+        res.render('admin/addProduct',{
+            message: null, 
+            error: null,
             cat:category,
             size: sizeOptions,
         })

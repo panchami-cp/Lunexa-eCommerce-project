@@ -230,7 +230,9 @@
 
     applyCustomDateBtn.addEventListener('click', () => {
         const start = new Date(document.getElementById('startDate').value) 
+        start.setHours(0,0,0,0)
         const end = new Date(document.getElementById('endDate').value) 
+        end.setHours(0,0,0,0)
 
         if (!start || !end) {
           Swal.fire({

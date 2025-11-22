@@ -43,7 +43,7 @@
     </div>
   </div>
 </form>
-<div><button id="clearAllBtn" class="btn btn-outline-secondary">Clear All</button></div>
+<div><a href="#" id="clearAllBtn">Clear All</a></div>
       </div>
       <div class="sidebar-section">
         <h3>Categories</h3>
@@ -194,39 +194,6 @@
   }
 </script>
 
-
-   <!-- search -->
-  <script>
-
-  //   function resetPage() {
-  //   const input = document.getElementById('searchInput');
-  //   input.value = ''; 
-
-  //   // reload the page without search param
-  //   const url = new URL(window.location.href);
-  //   url.searchParams.delete('search');
-  //   window.location.href = url.toString();
-  // }
-
-  // clear all filter function
-  // document.getElementById('clearAllBtn').addEventListener('click', function(){
-  //   document.querySelectorAll('.sidebar-list a').forEach(link => link.classList.remove('active'));
-  //   window.location.href = '/shop_all';
-  // })
-
-    function resetPage() {
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) searchInput.value = '';
-
-    document.querySelectorAll('.sidebar-list a').forEach(link => link.classList.remove('active'));
-
-    const baseUrl = window.location.origin + window.location.pathname;
-
-    window.location.href = baseUrl;
-  }
-
-  </script>
-
 <!-- add to wishlist -->
   <script>
 
@@ -258,8 +225,11 @@
             showPopup(data.message || "Removed from wishlist", "success");
           }
         } else {
-          // showPopup(data.message || "Something went wrong", "error");
-          window.location.href = redirectUrl
+           if (data.redirectUrl) {
+    window.location.href = data.redirectUrl;
+  } else {
+    showPopup(data.message || "Something went wrong", "error");
+  }
         }
       } catch (err) {
         console.error("Wishlist error:", err);
@@ -293,13 +263,11 @@
 
 <!-- search -->
 <script>
-
       document.addEventListener('DOMContentLoaded', () => {
         const searchInput = document.getElementById('searchInput');
         const resultsContainer = document.getElementById('resultsContainer');
         const searchForm = document.getElementById('searchForm');
 
-        
         if (searchForm) searchForm.addEventListener('submit', e => e.preventDefault());
 
         let controller = null;
@@ -307,7 +275,6 @@
         searchInput.addEventListener('input', async () => {
           const query = searchInput.value.trim();
 
-          // cancel previous request
           if (controller) controller.abort();
           controller = new AbortController();
 
@@ -322,7 +289,6 @@
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = html;
 
-            // accept either id (old/new) or the table wrapper
             const newResults = tempDiv.querySelector('#resultsContainer')
               || tempDiv.querySelector('#resultContainer')
               || tempDiv.querySelector('.table-responsive')
@@ -334,12 +300,11 @@
               console.warn('Live search: could not find results container in response');
             }
           } catch (err) {
-            if (err.name === 'AbortError') return; // expected when we abort previous fetch
+            if (err.name === 'AbortError') return; 
             console.error('Live search error:', err);
           }
         });
-
-        // intercept pagination links inside results so paging is ajax too
+     
         resultsContainer?.addEventListener('click', async (e) => {
           const a = e.target.closest('a');
           if (!a) return;
@@ -366,6 +331,11 @@
           input.dispatchEvent(new Event('input', { bubbles: true }));
         };
       });
+
+      //clear All
+      document.getElementById('clearAllBtn').addEventListener('click', () => {
+         window.location.href = '/shop_all'
+      });
 </script>
 
     <script src="js/jquery.min.js"></script>
@@ -376,8 +346,7 @@
       crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
     <script src="js/script.min.js"></script>
-
-    
+ 
     </body>
 
     </html>

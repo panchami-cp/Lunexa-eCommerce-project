@@ -8,9 +8,10 @@ const session = require('express-session')
 const passport = require('./config/passport')
 const flash = require('connect-flash')
 const adminRoutes = require('./routes/adminRoutes')
-const {setUserName, userAuth, adminAuth, checkBlocked, cart} = require('./middlewares/auth')
-
-
+const {userAuth, adminAuth, checkBlocked} = require('./middlewares/auth')
+const {errorPage} = require('./middlewares/errorHandler')
+const {setUserName, cart, setUser} = require('./middlewares/globalData')
+const flashMessages = require('./middlewares/flashMessages')
 
 app.use(express.json())
 app.use(express.urlencoded({extended:true})) 
@@ -26,54 +27,42 @@ app.use(session({
     }
 }))
 
+//flash messages
 app.use(flash())
-
-app.use((req, res, next) => {
-  res.locals.error = req.flash('error')
-  res.locals.success = req.flash('success')
-  next()
-})
-
+app.use(flashMessages)
 
 app.use(passport.initialize())
 app.use(passport.session())
 
-app.use((req, res, next) => {
-  res.locals.user = req.user || null
-  next()
-})
-
-
-
-
+app.use(setUser)
 
 app.use((req, res, next)=>{
     res.set('cache-control', 'no-store')
     next()
 })
 
-
+//global data
 app.use(setUserName)
 app.use(cart)
+
 app.use(checkBlocked)
 
 //route
 app.use('/',userRoutes)
 app.use('/admin',adminRoutes)
 
-
 //connect mongodb
 connectDB()
-
 
 //set view engine
 app.set("view engine","ejs")
 app.set("views",path.join(__dirname,"views"))
 
-
 //set public assets
 app.use(express.static('public'))
 
+//error page
+app.use(errorPage)
 
 //port
 app.listen(process.env.PORT,()=>{
