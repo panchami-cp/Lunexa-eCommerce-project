@@ -41,7 +41,6 @@ const addToWishlist = async(req, res)=>{
 try {
     const productId = req.query.id
     const userId = req.session.user
-    if(!userId) return res.json({success: false, redirectUrl: '/userNotFound'})
 const userData = await User.findById(userId);
 if (!userData) return res.status(400).json({ success: false, redirectUrl: '/userNotFound'})
 

@@ -8,17 +8,34 @@ const userAuth = (req,res,next)=>{
             if(data && !data.isBlocked){
                 next()
             }else{
-                res.redirect('/login')
+                // res.redirect('/login')
+                return handleAuthFailure(req, res)
             }
         })
         .catch(error=>{
             console.log("Error in user auth middleware "+error)
             res.status(500).send("Internal server error")
-
         })
     }else{
-        res.redirect('/login')
+        // res.redirect('/login')
+        return handleAuthFailure(req, res)
     }
+}
+//helper
+function handleAuthFailure(req, res) {
+    const isJsonRequest =
+    req.xhr ||
+    req.headers.accept?.includes("application/json") ||
+    req.headers["content-type"]?.includes("application/json")
+
+  if (isJsonRequest) {
+    return res.json({
+      success: false,
+      loginRequired: true,
+      message: "Please log in or sign up to continue"
+    });
+  }
+  return res.redirect('/login');
 }
 
 const adminAuth = (req,res,next)=>{
