@@ -17,7 +17,7 @@ const productDetails = async (req, res)=>{
         const categoryOffer = findCategory ?.categoryOffer || 0
         const productOffer = product.productOffer || 0
         const totalOffer = categoryOffer + productOffer
-        const recomentedProduct = await Product.find({category: findCategory}).limit(2)
+        const recomentedProduct = await Product.find({category: findCategory, _id:{$ne:productId} }).limit(2)
         const sizeVariant = product.sizeVariant
 
         res.render('user/productDetails',{
