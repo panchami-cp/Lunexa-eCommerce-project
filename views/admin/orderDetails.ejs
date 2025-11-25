@@ -31,7 +31,11 @@
   <!-- Product Details Block -->
   <div class="d-flex flex-wrap mb-1 gap-3" style="width: 100%;">
     <div class="box shadow-sm p-3 bg-body rounded flex-grow-1 <% if (!item.returnRequest || !item.returnRequest.status) { %>w-100<% } else { %>flex-fill<% } %>">
-      <h3 class="mb-3">Product Details</h3>
+      <h3 class="mb-3">Product Details
+      <%if(item.orderStatus === 'Cancelled' || item.orderStatus === 'Returned'){%>
+        <span class="badge bg-danger"><%=item.orderStatus%></span>
+        <%}%>
+        </h3>
       <div class="d-flex flex-wrap align-items-start gap-3">
         
         <!-- Product Image -->
@@ -175,7 +179,7 @@
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        if (deliveryDate <= today) {
+        if (deliveryDate < today) {
           errorContainer.style.display = 'block';
           errorContainer.innerHTML = "Invalid Delivery Date";
           return;

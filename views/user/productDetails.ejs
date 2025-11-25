@@ -69,7 +69,7 @@
         </div>
       </div>
       <!-- right side -->
-      <div class="right d-flex flex-column">
+      <div class="right d-flex flex-column m-0">
         <div class="details">
           <h2 class="text-capitalize mb-1">
             <%=product.productName%>
@@ -126,7 +126,7 @@
         </div>
        
       </div>
-       <section class="recommendations">
+       <section class="recommendations mt-0">
           <h3>Recommended for You</h3>
           <div class="rec-products">
             <%for(let i=0; i<recoment.length; i++){%>
@@ -134,11 +134,12 @@
                 <a href="/product_details?id=<%= recoment[i]._id %>">
                   <img src="/uploads/re-product-image/<%=recoment[i].productImage[0]%>" alt="recoment[i].productName" />
                 </a>
-                <p>
-                  <%=recoment[i].productName%>
-                </p>
-                <span>Rs.<%=recoment[i].salePrice%></span>
-
+                <p class="text-capitalize text-dark m-0"><%=recoment[i].productName%></p>
+                <p class="text-dark">Rs.<%=recoment[i].salePrice%>
+                <%if(recoment[i].salePrice !== recoment[i].regularPrice){%>
+                  <strike class="text-secondary">Rs.<%=recoment[i].regularPrice%></strike>
+                  <%}%>
+                  </p>
               </div>
               <%}%>
 

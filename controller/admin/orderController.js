@@ -10,7 +10,7 @@ const PDFDocument = require('pdfkit')
 const listOrders = async (req, res)=>{
     try {
     let page = parseInt(req.query.page) || 1
-    const limit = 4
+    const limit = 10
     let skip = (page - 1) * limit
 
     const search = req.query.search ? req.query.search.trim() : ""

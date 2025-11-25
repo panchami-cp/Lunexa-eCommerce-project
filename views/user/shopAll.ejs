@@ -207,7 +207,8 @@
 
       try {
         const response = await fetch(`/addtoWishlist?id=${productId}`, {
-          method: "GET"
+          method: "GET",
+          headers: { "Accept": "application/json" }
         })
 
         const data = await response.json();
