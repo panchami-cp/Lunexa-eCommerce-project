@@ -65,6 +65,9 @@ app.use(express.static('public'))
 app.use(errorPage)
 
 //port
+const PORT = process.env.PORT||4002;
+
+
 app.listen(process.env.PORT,()=>{
     console.log("server started at port 4002")
 })
