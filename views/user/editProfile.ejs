@@ -85,11 +85,12 @@
         <button type="submit" class="btn btn-dark">Save Changes</button>
       </div>
     </form>
-
+<%if(user.password){%>
     <div class="bottom-buttons">
       <a href="/change_email" class="btn btn-outline-secondary me-2 mt-3">Change Email</a>
       <a href="/change_password" class="btn btn-outline-secondary mt-3">Change Password</a>
     </div>
+    <%}%>
   </div>
 
 
