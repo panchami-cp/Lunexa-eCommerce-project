@@ -116,7 +116,11 @@
         <!-- Product details -->
         <td>
           <div style="width: 4rem;">
-            <img src="/uploads/re-product-image/<%= item.productId.productImage[0] %>" alt="<%= item.productId.productName %>">
+           <% if (item.productId && item.productId.productImage && item.productId.productImage[0]) { %>
+    <img src="/uploads/re-product-image/<%= item.productId.productImage[0] %>" alt="<%= item.productId.productName %>">
+<% } else { %>
+    <img src="" alt="no product">
+<% } %>
           </div>
         </td>
         <td><%= item.totalPrice %></td>

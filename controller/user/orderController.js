@@ -450,10 +450,8 @@ const orderDetails = async (req,res)=>{
         const order = await Order.findOne({"items._id":itemId}).populate('items.productId')
 
         if(!order){
-
             // return res.redirect('/pageNotFound')
             return res.send('order not found')
-
         }
 
         const item = order.items.find(item=> item._id.toString() === itemId.toString())
@@ -462,10 +460,21 @@ const orderDetails = async (req,res)=>{
             // return res.redirect('/pageNotFound')
             return res.send('item not found')
         }
+        const priceDetails = {}
+        let discount = item.regularPrice - item.price
+        let orderTotal = order.totalMRP - order.totalDiscount
+        let couponShare = order.couponDiscount? (item.totalPrice/orderTotal) * order.couponDiscount : 0
+        let couponSharePerItem = couponShare/item.quantity
+        let finalAmountPerItem = (item.price - couponSharePerItem)*item.quantity
 
+        priceDetails.discount = discount
+        priceDetails.couponSharePerItem = Math.round(couponSharePerItem)
+        priceDetails.finalAmountPerItem = Math.round(finalAmountPerItem)
+        
         res.render('user/orderDetails',{
             order,
-            item
+            item,
+            priceDetails
         })
         
     } catch (error) {

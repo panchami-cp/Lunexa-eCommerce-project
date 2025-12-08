@@ -128,6 +128,9 @@
       </div>
        <section class="recommendations mt-0">
           <h3>Recommended for You</h3>
+          <%if(recoment.length === 0){%>
+            <p>No Products</p>
+            <%}else{%>
           <div class="rec-products">
             <%for(let i=0; i<recoment.length; i++){%>
               <div class="rec-item">
@@ -142,13 +145,11 @@
                   </p>
               </div>
               <%}%>
-
           </div>
+          <%}%>
         </section>
-
     </div>
   </main>
-
 
 <!--add to wishlist -->
   <script>
@@ -163,7 +164,8 @@
 
         try {
           const response = await fetch(`/addtoWishlist?id=${productId}`, {
-            method: 'GET'
+            method: 'GET',
+            headers: { "Accept": "application/json" }
           });
 
           const data = await response.json();
@@ -172,11 +174,14 @@
             this.textContent = "Added to Wishlist ❤️";
             this.disabled = true;
           } else {
-            alert(data.message || "Already in wishlist.");
+            if(data.loginRequired){
+              window.location.href = data.redirectUrl
+            }
+            // alert(data.message || "Already in wishlist.");
           }
         } catch (err) {
           console.error("Wishlist error:", err);
-          window.location.href = "/pageNotFound"; 
+          // window.location.href = "/pageNotFound"; 
         }
       });
     }
@@ -215,7 +220,10 @@
             showPopup(data.message || "Added to cart", "success")
             
           } else {
-            showPopup(data.message || "Something went wrong", "error")
+            if(data.loginRequired){
+              window.location.href = data.redirectUrl
+            }
+            // showPopup(data.message || "Something went wrong", "error")
           }
         } catch (err) {
           console.error("Add to cart error:", err);

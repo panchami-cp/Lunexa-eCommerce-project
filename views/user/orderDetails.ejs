@@ -30,9 +30,7 @@
         <% } %>
       </div>
     </div>
-
     <hr>
-
     <!-- ===== PRODUCT DETAILS ===== -->
     <div class="row align-items-center mb-4">
       <div class="col-md-3 text-center">
@@ -43,7 +41,6 @@
       <div class="col-md-9">
         <h5 class='text-uppercase'><%= item.productId.productName %></h5>
         <p><strong>Size:</strong> <%= item.size %></p>
-        <p><strong>Quantity:</strong> <%= item.quantity %></p>
       </div>
     </div>
 
@@ -55,9 +52,10 @@
       <div class="col-md-6">
         <h5 class="mb-3">Price Details</h5>
         <p><strong>MRP:</strong> ₹<%= item.regularPrice %></p>
-        <p><strong>Discount:</strong> ₹</p>
-        <p><strong>Coupon Share:</strong> ₹<%= item.couponShare ? item.couponShare : "0.00" %></p>
-        <p><strong>Final Payment (per item):</strong> ₹<%= item.price %></p>
+        <p><strong>Discount:</strong> ₹<%=priceDetails.discount%></p>
+        <p><strong>Coupon Share:</strong> ₹<%=priceDetails.couponSharePerItem%></p>
+        <p><strong>Quantity:</strong> <%= item.quantity %></p>
+        <p><strong>Final Payment (per item):</strong> ₹<%=priceDetails.finalAmountPerItem%></p>
       </div>
 
       <!-- Right: Address -->

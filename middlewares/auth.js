@@ -32,7 +32,8 @@ function handleAuthFailure(req, res) {
     return res.json({
       success: false,
       loginRequired: true,
-      message: "Please log in or sign up to continue"
+      message: "Please log in or sign up to continue",
+      redirectUrl: '/login'
     });
   }
   return res.redirect('/login');
