@@ -24,7 +24,7 @@
             </tr>
         </thead>
         <tbody>
-            <% wallet.transactions.reverse().forEach(tx => { %>
+            <% transactions.reverse().forEach(tx => { %>
                 <tr>
                     <td><%= new Date(tx.date).toLocaleDateString() %></td>
                     <td>
@@ -51,6 +51,23 @@
         </tbody>
     </table>
 </div>
+</div>
+ <div class="pagination d-flex justify-content-center mt-4">
+  <% if (currentPage > 1) { %>
+    <a href="/wallet?page=<%= currentPage - 1 %>" class="btn btn-outline-secondary mx-1">&laquo; Previous</a>
+  <% } %>
+
+  <% for (let i = 1; i <= totalPages; i++) { %>
+    <% if (i === currentPage) { %>
+      <span class="btn  mx-1"><%= i %></span>
+    <% } else { %>
+      <a href="/wallet?page=<%= i %>" class="btn btn-outline-secondary mx-1"><%= i %></a>
+    <% } %>
+  <% } %>
+
+  <% if (currentPage < totalPages) { %>
+    <a href="/wallet?page=<%= currentPage + 1 %>" class="btn btn-outline-secondary mx-1">Next &raquo;</a>
+  <% } %>
 </div>
 
 
