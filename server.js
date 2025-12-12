@@ -9,7 +9,7 @@ const passport = require('./config/passport')
 const flash = require('connect-flash')
 const adminRoutes = require('./routes/adminRoutes')
 const {userAuth, adminAuth, checkBlocked} = require('./middlewares/auth')
-const {errorPage} = require('./middlewares/errorHandler')
+const {errorPage, errorHandler} = require('./middlewares/errorHandler')
 const {setUserName, cart, setUser} = require('./middlewares/globalData')
 const flashMessages = require('./middlewares/flashMessages')
 
@@ -63,6 +63,7 @@ app.use(express.static('public'))
 
 //error page
 app.use(errorPage)
+app.use(errorHandler)
 
 //port
 const PORT = process.env.PORT||4002;
