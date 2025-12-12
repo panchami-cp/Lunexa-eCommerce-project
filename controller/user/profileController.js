@@ -5,6 +5,7 @@ const nodemailer = require('nodemailer')
 const bcrypt = require('bcrypt')
 const env = require('dotenv').config()
 const session = require('express-session')
+const STATUS = require('../../constants/statusCodes')
 
 const loadEmailVerification = async (req, res)=>{
 
@@ -111,7 +112,7 @@ const verifyPassOtp = async (req,res)=>{
     } catch (error) {
 
         console.error("Error in verifying otp, "+error)
-        return res.status(500).json({ success: false, message: "Internal server error" });
+        return res.status(STATUS.SERVER_ERROR).json({ success: false, message: "Internal server error" });
         
     }
 }
@@ -136,7 +137,7 @@ const resendPassOtp = async (req, res)=>{
     } catch (error) {
 
         console.error("Error in resend otp, "+error)
-        return res.status(500).json({ success: false, message: "Internal server error" });
+        return res.status(STATUS.SERVER_ERROR).json({ success: false, message: "Internal server error" });
     }
 }
 

@@ -4,6 +4,7 @@ const Category = require('../../model/categorySchema')
 const Wishlist = require('../../model/wishlistSchema')
 const Cart = require('../../model/cartSchema')
 const {cartTotals} = require('../../helpers/cartHelper')
+const STATUS = require('../../constants/statusCodes')
 const maxProduct = 5
 
 const productDetails = async (req, res)=>{
@@ -42,7 +43,7 @@ try {
     const productId = req.query.id
     const userId = req.session.user
 const userData = await User.findById(userId);
-if (!userData) return res.status(400).json({ success: false, redirectUrl: '/userNotFound'})
+if (!userData) return res.status(STATUS.BAD_REQUEST).json({ success: false, redirectUrl: '/userNotFound'})
 
 let wishlist = await Wishlist.findOne({ userId });
 
@@ -157,19 +158,19 @@ const addToCart = async (req, res) => {
     const {selectedSize, productId} = req.body;
 
     if (!productId) {
-      return res.status(400).json({success: false, message: "Cannot find product" });
+      return res.status(STATUS.BAD_REQUEST).json({success: false, message: "Cannot find product" });
     }
 
     const product = await Product.findById(productId);
 
     if (!product || product.isBlocked || product.totalQuantity === 0) {
-      return res.status(400).json({success: false, message: "This product is unavailable." });
+      return res.status(STATUS.BAD_REQUEST).json({success: false, message: "This product is unavailable." });
     }
 
     const category = await Category.findOne({ _id: product.category });
 
     if (!category || !category.isListed) {
-      return res.status(400).json({success: false, message: "This category is currently unavailable." });
+      return res.status(STATUS.BAD_REQUEST).json({success: false, message: "This category is currently unavailable." });
     }
 
     const price = product.salePrice;
@@ -203,12 +204,12 @@ const addToCart = async (req, res) => {
       if (existingItem) {
 
         if (existingItem.quantity >= maxProduct) {
-          return res.status(400).json({success: false, message: "Reached limit" });
+          return res.status(STATUS.BAD_REQUEST).json({success: false, message: "Reached limit" });
         }
         const productSize = product.sizeVariant.find(variant => variant.size === selectedSize)
         const sizeQuantity = productSize.quantity
         if(existingItem.quantity >= sizeQuantity){
-          return res.status(400).json({success: false, message: `Only ${sizeQuantity} items left`})
+          return res.status(STATUS.BAD_REQUEST).json({success: false, message: `Only ${sizeQuantity} items left`})
         }
         existingItem.quantity += 1;
         existingItem.totalPrice = existingItem.price * existingItem.quantity
@@ -236,12 +237,12 @@ const addToCart = async (req, res) => {
       
       {$pull:{products:{productId:productId}}})
 
-    return res.status(200).json({success: true, message: "Added to cart" });
+    return res.status(STATUS.OK).json({success: true, message: "Added to cart" });
 
   } catch (error) {
 
     console.log("Error in add product to cart: ", error);
-    return res.status(500).json({success: false});
+    return res.status(STATUS.SERVER_ERROR).json({success: false});
   }
 };
 

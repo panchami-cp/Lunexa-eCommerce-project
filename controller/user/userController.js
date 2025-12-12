@@ -9,7 +9,7 @@ const Wishlist = require('../../model/wishlistSchema')
 const Cart = require('../../model/cartSchema')
 const Wallet = require('../../model/walletSchema')
 const { redirect } = require('express/lib/response')
-
+const STATUS = require('../../constants/statusCodes')
 
 const  loadHomePage = async (req,res)=>{
     
@@ -209,7 +209,7 @@ const loadVerifyOtp = async (req,res)=>{
 
         } catch (error) {
             console.error("OTP verification page not loading: "+error)
-            res.status(500).send("Server Error")
+            res.status(STATUS.SERVER_ERROR).send("Server Error")
         }
 }
 
@@ -289,18 +289,18 @@ const otpVerification = async (req,res)=>{
                return res.json({success: true, redirectUrl: '/'})
             }
 
-             return res.status(200).json({success: true, redirectUrl:'/'})
+             return res.status(STATUS.OK).json({success: true, redirectUrl:'/'})
 
         }else{
             
-            res.status(400).json({success: false, message: "Invalid OTP, Please try again"})
+            res.status(STATUS.BAD_REQUEST).json({success: false, message: "Invalid OTP, Please try again"})
 
         }
 
     } catch (error) {
         
         console.error("Error in verifying OTP: "+ error)
-        res.status(500).json({success: false, message: "An error occured"})
+        res.status(STATUS.SERVER_ERROR).json({success: false, message: "An error occured"})
 
     }
 }
@@ -310,7 +310,7 @@ const resendOtp = async (req,res)=>{
 
         const {email} = req.session.userData
         if(!email){
-            return res.status(400).json({success:false, message: "Email not found"})
+            return res.status(STATUS.BAD_REQUEST).json({success:false, message: "Email not found"})
 
         }
 
@@ -321,16 +321,16 @@ const resendOtp = async (req,res)=>{
 
         if(sendEmail){
             console.log("Resend otp: "+ otp)
-            res.status(200).json({success: true, message:"OTP Resend successfully"})
+            res.status(STATUS.OK).json({success: true, message:"OTP Resend successfully"})
 
         }else{
-            res.status(500).json({success:false, message:"Failed to resend OTP, Please try again"})
+            res.status(STATUS.SERVER_ERROR).json({success:false, message:"Failed to resend OTP, Please try again"})
 
         }
         
     } catch (error) {
         console.error("error resending otp: "+error)
-        res.status(500).json({success:false, message:"Internal server error. Please try again"})
+        res.status(STATUS.SERVER_ERROR).json({success:false, message:"Internal server error. Please try again"})
 
     }
 }
@@ -478,7 +478,7 @@ const loadShopAll = async (req, res) => {
 
         if(isAjax){
             return res.render('user/shopAll', templateData, (err, html)=>{
-            if(err) return res.status(500).send('Error rendering users')
+            if(err) return res.status(STATUS.SERVER_ERROR).send('Error rendering users')
                 res.send(html)
             })
         }

@@ -1,5 +1,6 @@
 const User = require('../model/userSchema')
 const Cart = require('../model/cartSchema')
+const STATUS = require('../constants/statusCodes')
 
 const userAuth = (req,res,next)=>{
     if(req.session.user){
@@ -13,7 +14,7 @@ const userAuth = (req,res,next)=>{
         })
         .catch(error=>{
             console.log("Error in user auth middleware "+error)
-            res.status(500).send("Internal server error")
+            res.status(STATUS.SERVER_ERROR).send("Internal server error")
         })
     }else{
         return handleAuthFailure(req, res)
@@ -58,7 +59,7 @@ const adminAuth = async(req,res,next)=>{
 
     } catch (error) {
         console.log("Error in adminAuth middleware:", error);
-        return res.status(500).send("Internal server error");
+        return res.status(STATUS.SERVER_ERROR).send("Internal server error");
     }
 
 }

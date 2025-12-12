@@ -14,6 +14,7 @@ const { v4: uuidv4 } = require('uuid')
 const { redirect } = require('express/lib/response')
 const Wallet = require('../../model/walletSchema')
 const {createNewOrder} = require('../../helpers/placeOrderHelper')
+const STATUS = require('../../constants/statusCodes')
 
 
 const loadCheckout = async(req,res)=>{
@@ -141,7 +142,7 @@ const placeOrder = async (req, res)=>{
             populate: { path: "category", select: "isUnlisted" },
         })
         if(!cart || cart.items.length === 0){
-           return res.status(400).json({success: false, message: 'Cart not found'})
+           return res.status(STATUS.BAD_REQUEST).json({success: false, message: 'Cart not found'})
         }  
 
         const hasBlockedOrUnlisted = cart.items.some(item => {
@@ -316,7 +317,7 @@ const placeOrder = async (req, res)=>{
         
     } catch (error) {
         console.error('Error in place order:', error)
-        res.status(500).json({success: false, redirectUrl:'/pageNotFound'})
+        res.status(STATUS.SERVER_ERROR).json({success: false, redirectUrl:'/pageNotFound'})
     }
 }
 

@@ -60,7 +60,7 @@ const allProducts = async (req, res)=>{
 
             if(isAjax){
                 return res.render('admin/products', templateData, (err, html)=>{
-                    if(err) return res.status(500).send('Error rendering users')
+                    if(err) return res.status(STATUS.SERVER_ERROR).send('Error rendering users')
                     res.send(html)
                 })
             }
@@ -261,7 +261,7 @@ const editProduct = async (req, res)=>{
         })
 
         if(existingProduct){
-            return res.status(400).json({error:"Product with this name already exists, Please try with another name"})
+            return res.status(STATUS.BAD_REQUEST).json({error:"Product with this name already exists, Please try with another name"})
 
         }
 

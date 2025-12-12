@@ -1,6 +1,7 @@
 const Address = require('../../model/addressSchema')
 const User = require('../../model/userSchema')
 const { search } = require('../../routes/userRoutes')
+const STATUS = require('../../constants/statusCodes')
 
 const customerInfo = async(req, res)=>{
     try {
@@ -57,7 +58,7 @@ const customerInfo = async(req, res)=>{
 
         if(isAjax){
        return res.render('admin/customers', templateData, (err, html)=>{
-            if(err) return res.status(500).send('Error rendering users')
+            if(err) return res.status(STATUS.SERVER_ERROR).send('Error rendering users')
                 res.send(html)
         })
     }

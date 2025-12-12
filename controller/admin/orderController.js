@@ -6,6 +6,7 @@ const Cart = require('../../model/cartSchema')
 const Wallet = require('../../model/walletSchema')
 const ExcelJS = require('exceljs')
 const PDFDocument = require('pdfkit')
+const STATUS = require('../../constants/statusCodes')
 
 const listOrders = async (req, res)=>{
     try {
@@ -297,7 +298,7 @@ const refund = async (req, res)=>{
         }
 
         if (method !== 'wallet') {
-            return res.status(400).send('Invalid refund method')
+            return res.status(STATUS.BAD_REQUEST).send('Invalid refund method')
         }
 
         let wallet = await Wallet.findOne({ userId: order.userId._id })
@@ -419,7 +420,7 @@ const generateExcelReport = async (req, res) => {
       .lean();
 
     if (!orders.length) {
-      return res.status(404).json({success: false, message: "No orders found" });
+      return res.status(STATUS.NOT_FOUND).json({success: false, message: "No orders found" });
     }
 
     const workbook = new ExcelJS.Workbook();
@@ -514,7 +515,7 @@ const generateExcelReport = async (req, res) => {
     res.end();
   } catch (error) {
     console.error("Excel Report Error:", error);
-    res.status(500).json({success: false, message: "Server Error while generating Excel" });
+    res.status(STATUS.SERVER_ERROR).json({success: false, message: "Server Error while generating Excel" });
   }
 }
 
@@ -551,7 +552,7 @@ const generatePdfReport = async (req, res) => {
       .lean();
 
      if (!orders.length) {
-      return res.status(404).json({success: false, message: "No orders found" });
+      return res.status(STATUS.NOT_FOUND).json({success: false, message: "No orders found" });
     }  
 
     const doc = new PDFDocument({ margin: 40, size: "A4" });

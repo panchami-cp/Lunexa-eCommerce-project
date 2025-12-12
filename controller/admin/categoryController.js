@@ -2,7 +2,7 @@ const Category = require('../../model/categorySchema')
 const Product = require('../../model/productSchema')
 const pluralize = require('pluralize')
 const fuzzy = require('fuzzy')
-
+const STATUS = require('../../constants/statusCodes')
 
 const categoryInfo = async (req, res)=>{
 
@@ -91,7 +91,7 @@ const addCategory = async (req,res)=>{
         
     } catch (error) {
 
-        return res.status(500).json({error:"Internal server error"})
+        return res.status(STATUS.SERVER_ERROR).json({error:"Internal server error"})
 
     }
 }
@@ -131,7 +131,7 @@ const editCategory = async (req, res)=>{
         );
 
         if (existingNames.includes(input)) {
-            return res.status(400).json({ error: "Category already exists." });
+            return res.status(STATUS.BAD_REQUEST).json({ error: "Category already exists." });
         }
 
         const partialMatch = existingNames.find(existing =>
@@ -139,12 +139,12 @@ const editCategory = async (req, res)=>{
         );
 
         if (partialMatch) {
-            return res.status(400).json({ error: "Similar category exists." });
+            return res.status(STATUS.BAD_REQUEST).json({ error: "Similar category exists." });
         }
 
         const fuzzyResults = fuzzy.filter(input, existingNames);
         if (fuzzyResults.length > 0 && fuzzyResults[0].score > 80) {
-            return res.status(400).json({
+            return res.status(STATUS.BAD_REQUEST).json({
                 error: `Category name is too similar to '${fuzzyResults[0].string}'.`
             });
         }
@@ -157,14 +157,14 @@ const editCategory = async (req, res)=>{
         );
 
         if (updateCategory) {
-            return res.status(200).json({ success: true });
+            return res.status(STATUS.OK).json({ success: true });
         } else {
-            return res.status(404).json({ error: "Category not found." });
+            return res.status(STATUS.NOT_FOUND).json({ error: "Category not found." });
         }
 
     } catch (error) {
         console.error("Error in update category: ", error);
-        return res.status(500).json({ error: "Internal server error" });
+        return res.status(STATUS.SERVER_ERROR).json({ error: "Internal server error" });
     }
 }
 

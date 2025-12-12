@@ -5,6 +5,7 @@ const Category = require('../../model/categorySchema')
 const mongoose = require('mongoose')
 const bcrypt = require('bcrypt')
 const { render } = require('ejs')
+const STATUS = require('../../constants/statusCodes')
 
 const loadLogin = (req,res)=>{
 
