@@ -8,7 +8,6 @@ const userAuth = (req,res,next)=>{
             if(data && !data.isBlocked){
                 next()
             }else{
-                // res.redirect('/login')
                 return handleAuthFailure(req, res)
             }
         })
@@ -17,7 +16,6 @@ const userAuth = (req,res,next)=>{
             res.status(500).send("Internal server error")
         })
     }else{
-        // res.redirect('/login')
         return handleAuthFailure(req, res)
     }
 }
@@ -39,23 +37,30 @@ function handleAuthFailure(req, res) {
   return res.redirect('/login');
 }
 
-const adminAuth = (req,res,next)=>{
-    if(req.session.admin){
-    User.findOne({isAdmin:true})
-    .then(data=>{
-        if(data){
-            next()
-        }else{
-            res.redirect('/admin/login')
+const adminAuth = async(req,res,next)=>{
+   
+     try {
+
+        if (!req.session.admin) {
+            return res.redirect('/admin/login');
         }
-    })
-    .catch(error=>{
-        console.log("Error in adminAuth middleware "+error)
-        res.status(500).send("Internal server error")
-    })
-    }else{
-        res.redirect('/admin/login')
+
+        const admin = await User.findOne({
+            _id: req.session.admin._id,
+            isAdmin: true
+        });
+
+        if (!admin) {
+            return res.redirect('/admin/login');
+        }
+
+        next();
+
+    } catch (error) {
+        console.log("Error in adminAuth middleware:", error);
+        return res.status(500).send("Internal server error");
     }
+
 }
 
 const checkBlocked = async (req, res, next) => {

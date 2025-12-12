@@ -29,7 +29,9 @@ const login = async (req,res)=>{
 
             if(matchPassword){
 
-                req.session.admin = true
+                req.session.admin = {
+                  _id: admin._id
+                }
                 return res.redirect('/admin')
 
             }else{
