@@ -40,12 +40,24 @@ const loadCheckout = async(req,res)=>{
 
             return product.isBlocked === true || product.category.isUnlisted === true;
         })
-
+        
         if (hasBlockedOrUnlisted) {
             req.flash('error', 'Some products are blocked or belong to an unlisted category.')
             return res.redirect('/cart')
         }
 
+        //stock validation
+        for(let item of cart.items){
+            const product = item.productId
+            const orderedSize = item.size
+            const orderedQty = item.quantity
+            const sizeVariant = product.sizeVariant.find((variant)=> variant.size === orderedSize)
+            if(sizeVariant.quantity === 0 || sizeVariant.quantity < orderedQty){
+                req.flash('error', `The product ${product.productName} is out of stock or insufficient in quantity.`)
+                return res.redirect('/cart')
+            }
+
+        }
         const wallet = await Wallet.findOne({userId: userId})
 
         const walletBalance = wallet? wallet.balance : 0
@@ -142,6 +154,7 @@ const placeOrder = async (req, res)=>{
             populate: { path: "category", select: "isUnlisted" },
         })
         if(!cart || cart.items.length === 0){
+            req.session.appliedCoupon = null
            return res.status(STATUS.BAD_REQUEST).json({success: false, message: 'Cart not found'})
         }  
 
@@ -153,6 +166,7 @@ const placeOrder = async (req, res)=>{
         })
 
         if (hasBlockedOrUnlisted) {
+            req.session.appliedCoupon = null
             return res.json({
                 success: false,
                 message: "Some products are blocked or belong to an unlisted category. Please check your cart."
@@ -196,6 +210,7 @@ const placeOrder = async (req, res)=>{
     }
 
     if(stockIssue){
+        req.session.appliedCoupon = null
         req.flash('error', 'The product(s) were out of stock or insufficient. Your cart has been updated.')
         return res.json({success: false, redirectUrl: '/cart'})
     }
