@@ -24,7 +24,7 @@
             </tr>
         </thead>
         <tbody>
-            <% transactions.reverse().forEach(tx => { %>
+            <% transactions.forEach(tx => { %>
                 <tr>
                     <td><%= new Date(tx.date).toLocaleDateString() %></td>
                     <td>

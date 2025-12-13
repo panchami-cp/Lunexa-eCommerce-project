@@ -125,16 +125,24 @@
           </tbody>
         </table>
       </div>
+      <!-- pagination -->
+       <div class="d-flex justify-content-center mt-3" id="orderPagination"></div>
     </div>
 
   </div>
 </section>
 
 <script>
-  let topProductsChart, topCategoriesChart;
+  let topProductsChart, topCategoriesChart
+  let currentFilter = 'today'
+  let currentFromDate = ''
+  let currentToDate = ''
 
-  async function loadDashboardData(filter = "today", fromDate = "", toDate = "") {
-    let url = `/admin/dashboardData?filter=${filter}`
+  async function loadDashboardData(filter = "today", fromDate = "", toDate = "", page = 1) {
+    currentFilter = filter
+    currentFromDate = fromDate
+    currentToDate = toDate
+    let url = `/admin/dashboardData?filter=${filter}&page=${page}`
     if (filter === "custom" && fromDate && toDate) {
       url += `&fromDate=${fromDate}&toDate=${toDate}`
     }
@@ -154,6 +162,10 @@
 
       // table
       updateOrderTable(data.orderDetails)
+
+      //pagination
+      renderPagination(data.pagination)
+
     } catch (err) {
       console.error("Error loading dashboard:", err)
     }
@@ -248,6 +260,39 @@
         </tr>`;
       tbody.innerHTML += row;
     });
+  }
+
+  //pagination
+  function renderPagination(pagination) {
+    const container = document.getElementById("orderPagination")
+    container.innerHTML = ""
+
+    if (!pagination || pagination.totalPages <= 1) return
+
+    if (pagination.currentPage > 1) {
+      container.innerHTML += `
+        <button class="btn btn-outline-secondary mx-1"
+          onclick="loadDashboardData(currentFilter, currentFromDate, currentToDate, ${pagination.currentPage - 1})">
+          « Prev
+        </button>`
+    }
+
+    for (let i = 1; i <= pagination.totalPages; i++) {
+      container.innerHTML += `
+        <button
+          class="btn ${i === pagination.currentPage ? "btn-primary" : "btn-outline-secondary"} mx-1"
+          onclick="loadDashboardData(currentFilter, currentFromDate, currentToDate, ${i})">
+          ${i}
+        </button>`
+    }
+
+    if (pagination.currentPage < pagination.totalPages) {
+      container.innerHTML += `
+        <button class="btn btn-outline-secondary mx-1"
+          onclick="loadDashboardData(currentFilter, currentFromDate, currentToDate, ${pagination.currentPage + 1})">
+          Next »
+        </button>`
+    }
   }
 
   function getStatusColor(status) {

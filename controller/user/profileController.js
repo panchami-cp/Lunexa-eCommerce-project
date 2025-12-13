@@ -720,11 +720,9 @@ const newEmail = async(req,res)=>{
 const wallet = async(req, res)=>{
     try {
         const page = parseInt(req.query.page) || 1
-       
         const limit = 5
         const skip = (page - 1) * limit
         const userId = req.session.user
-
         const user = await User.findById(userId)
 
         if(!user){
@@ -732,9 +730,6 @@ const wallet = async(req, res)=>{
         }
 
         let wallet = await Wallet.findOne({userId: userId})
-        let transactions = wallet.transactions
-
-        console.log(transactions)
 
         if(!wallet){
             wallet = {
@@ -742,10 +737,15 @@ const wallet = async(req, res)=>{
                 transactions: []
             }
         }
-        let totalPages = Math.ceil(transactions.length/limit)
+        const allTransactions = wallet.transactions
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+           
+        const paginatedTransactions = allTransactions.slice(skip, skip + limit)    
+        const totalPages = Math.ceil(allTransactions.length / limit)
+
         res.render('user/wallet',{
             wallet ,
-            transactions,
+            transactions: paginatedTransactions,
             currentPage: page,
             totalPages
         })

@@ -78,7 +78,7 @@ const renderDashboard = async (req, res)=>{
 
 const dashboardData = async (req,res)=>{
     try {
-       const { filter, fromDate, toDate, page = 1, limit = 50 } = req.query;
+       const { filter = 'today', fromDate, toDate, page = 1, limit = 10 } = req.query;
     const pageNum = parseInt(page);
     const perPage = parseInt(limit);
     const skip = (pageNum - 1) * perPage;
@@ -239,8 +239,6 @@ const dashboardData = async (req,res)=>{
     }
   }
 ]);
-
-
 
     res.json({
       summary: {
