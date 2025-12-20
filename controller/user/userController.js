@@ -83,6 +83,90 @@ const logout = async (req, res)=>{
     }
 }
 
+const referralCodePage = async(req, res)=>{
+    try {
+        res.render('user/referralCode')
+    } catch (error) {
+        console.error('Error in loading referral code page', error)
+        res.redirect('/pageNotFound')
+    }
+}
+
+const googleAuthSignUp = async(req, res)=>{
+    try {
+         const { referralCode } = req.body
+         console.log(referralCode)
+    const googleUser = req.session.tempGoogleUser
+
+    if (!googleUser) {
+      return res.redirect('/signup')
+    }
+
+    let referrer = null
+
+    if (referralCode) {
+      const referrer = await User.findOne({referralCode})
+
+      if(!referrer){
+        console.log('invalid referral code')
+        req.session.message = ["This referral code is invalid"]
+        return res.redirect('/signup')
+      }
+
+      if (referrer.email === googleUser.email) {
+            console.log('own referral code')
+            req.session.message = ["You cannot use your own referral code"]
+            return res.redirect('/signup')
+        }
+    }
+
+    const newUser = new User({
+      ...googleUser
+    })
+    await newUser.save()
+
+    const newUserWallet = new Wallet({
+        userId : newUser._id,
+        balance: 50,
+        transactions: [{
+            type: 'credit',
+            amount: 50,
+            description: 'referral bonus'
+        }]
+    })  
+    newUserWallet.save()
+
+    if(referrer){
+        let refWallet = await Wallet.findOne({ userId: referrer._id })
+
+        if (!refWallet) {
+            refWallet = new Wallet({
+                userId: referrer._id,
+                balance: 0,
+                transactions: []
+            })
+        }
+        const referrerReward = 100
+
+        refWallet.balance += referrerReward
+        refWallet.transactions.push({
+            type: "credit",
+            amount: referrerReward,
+            description: "referral bonus"
+        })
+        await refWallet.save()
+    }
+    // manual login
+    req.session.user = newUser._id
+    delete req.session.tempGoogleUser
+
+    res.redirect('/')
+    } catch (error) {
+        console.log(error)
+        res.redirect('/pageNotFound')
+    }
+}
+
 const loadSignup = async (req,res)=>{
     try{
 
@@ -157,7 +241,6 @@ const signup = async (req,res)=>{
         if(userExist){
 
             req.session.messages = ["User with this Email already exists"]
-            console.log("User with this Email already exists")
             return res.redirect('/signup')
         }
 
@@ -228,9 +311,6 @@ const otpVerification = async (req,res)=>{
     try {
 
         const {otp} = req.body
-
-        // console.log("otp: "+otp)
-        // console.log("session.otp: "+req.session.userOtp)
 
         if(otp === req.session.userOtp){
 
@@ -491,6 +571,8 @@ const loadShopAll = async (req, res) => {
 }
 module.exports = {
     loadHomePage,
+    referralCodePage,
+    googleAuthSignUp,
     loadSignup,
     signup,
     loadVerifyOtp,

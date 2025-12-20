@@ -7,38 +7,46 @@ const env = require('dotenv').config()
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.GOOGLE_CALLBACK_URL
+    callbackURL: process.env.GOOGLE_CALLBACK_URL,
+    passReqToCallback: true
 },
 
-async (accessToken, refreshToken,profile,done)=>{
+async (req, accessToken, refreshToken,profile,done)=>{
 
      try {
         const email = profile.emails?.[0]?.value;
-
         if (!email) {
             return done(null, false, { message: "Email not provided by Google" });
         }
 
-        let user = await User.findOne({ email });
+        let user = await User.findOne({ email })
 
         if (user) {
             if (user.googleId) {
                 return done(null, user);
             } else {
-                
                 return done(null, false, { message: "User with this email already exists. Please use password login." });
             }
-        } else {
+        } 
+        // else {
             
-            const newUser = new User({
-                fullname: profile.displayName,
-                email,
-                googleId: profile.id,
-            });
+        //     const newUser = new User({
+        //         fullname: profile.displayName,
+        //         email,
+        //         googleId: profile.id,
+        //     });
 
-            await newUser.save();
-            return done(null, newUser);
+        //     await newUser.save();
+        //     return done(null, newUser);
+        // }
+        req.session.tempGoogleUser = {
+            fullname: profile.displayName,
+            email,
+            googleId: profile.id
         }
+        console.log(req.session.tempGoogleUser)
+        return done(null, false)
+
     } catch (error) {
         return done(error, null)
     }
@@ -46,7 +54,6 @@ async (accessToken, refreshToken,profile,done)=>{
 ))
 
 passport.serializeUser((user, done)=>{
-
     done(null,user.id)
 
 })

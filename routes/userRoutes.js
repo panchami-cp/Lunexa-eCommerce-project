@@ -23,12 +23,43 @@ router.get('/shop_all', usercontroller.loadShopAll)
 //User controller//google auth
 router.get('/auth/google',passport.authenticate('google',{scope:['profile', 'email'] })) 
 router.get('/auth/google/callback', 
-    passport.authenticate('google',{failureRedirect:'/signup', failureMessage: true }),
-    (req,res)=>{
-        req.session.user = req.user._id
-        res.redirect('/')
-    })
+    //passport.authenticate('google',{session: false}), failureRedirect:'/signup', failureMessage: true
+    (req,res, next)=>{
+         passport.authenticate('google', (err, user, info) => {
+      if (err) {
+        return res.redirect('/signup')
+      }
 
+      // NEW Google user (referral flow)
+      if (!user && req.session.tempGoogleUser) {
+        return res.redirect('/referral')
+      }
+
+      // Existing Google user
+      if (user) {
+        req.login(user, (err) => {
+          if (err) return res.redirect('/signup')
+          req.session.user = user._id
+          return res.redirect('/')
+        })
+      } else {
+        return res.redirect('/signup')
+      }
+    })(req, res, next)
+        // if(req.session.tempGoogleUser){
+        //     return res.redirect('/referral')
+        //     // req.session.user = req.user._id
+        //     // return res.redirect('/')
+        // }
+        // if(req.user){
+        //     req.session.user = req.user._id
+        //     res.redirect('/')
+        // }
+        
+        // res.redirect('/signup')
+    })
+router.get('/referral', usercontroller.referralCodePage)
+router.post('/referral', usercontroller.googleAuthSignUp)
 //Profile controller
 router.get('/verify_email', profileController.loadEmailVerification)
 router.post('/verify_email', profileController.emailVerification)
